@@ -27,7 +27,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core"))
+            api(project(":core"))
             implementation(libs.ktor.core)
             implementation(libs.khttpclient)
             implementation(libs.datetime)
