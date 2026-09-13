@@ -35,7 +35,7 @@ import kotlin.test.assertNotNull
 class LiveReadTest {
 
     @Test
-    fun testMeAndTrends() = runBlocking {
+    fun testMeAndTrends(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val me = Live.saypip.me().me(MeMeRequest()).data
@@ -48,7 +48,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testFeedAndPaging() = runBlocking {
+    fun testFeedAndPaging(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val first = Live.saypip.feed().feed(FeedFeedRequest().also { it.limit = 5 }).data
@@ -72,7 +72,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testTalkAndFriendsFeeds() = runBlocking {
+    fun testTalkAndFriendsFeeds(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val talk = Live.saypip.feed().talk(FeedTalkRequest()).data
@@ -83,7 +83,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testSearchAndTag() = runBlocking {
+    fun testSearchAndTag(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val search = Live.saypip.feed().search(
@@ -106,16 +106,20 @@ class LiveReadTest {
     }
 
     @Test
-    fun testSinglePostGraph() = runBlocking {
+    fun testSinglePostGraph(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
-        val feed = Live.saypip.feed().feed(FeedFeedRequest().also { it.limit = 10 }).data
-        val post = feed.items.firstOrNull() ?: return@runBlocking
+        val feed = Live.saypip.feed().feed(FeedFeedRequest().also { it.limit = 20 }).data
+
+        // A post fetched on its own resolves its author for a signed-in viewer; one of ours has
+        // no author to resolve, so somebody else's is the interesting row.
+        val post = feed.items.firstOrNull { !it.isMine } ?: feed.items.firstOrNull()
+            ?: return@runBlocking
 
         val single = Live.saypip.posts().post(
             PostsPostRequest().also { it.postId = post.id },
         ).data
-        println("SINGLE id=${single.id} author=${single.author?.identity} " +
+        println("SINGLE id=${single.id} mine=${single.isMine} author=${single.author?.identity} " +
             "color=${single.authorColor} readable=${single.readableUntil != null}")
 
         val reactions = Live.saypip.posts().reactions(
@@ -130,19 +134,31 @@ class LiveReadTest {
         println("CONVERSATIONS count=${conversations.items.size}")
 
         single.author?.let { person ->
-            val page = Live.saypip.users().user(
-                UsersUserRequest().also {
-                    it.identityToken = person.identity
-                    it.limit = 5
-                },
-            ).data
-            println("USERPAGE name=${page.person.label} posts=${page.posts.size} " +
-                "relationship=${page.relationship?.friendSince != null}")
+            dumpUserPage(person.identity)
+        }
+
+        // The viewer's relationships carry an identity for each counterpart, which is the other
+        // way a user page is reached.
+        val relationships = Live.saypip.relationships().list(RelationshipsListRequest()).data
+        relationships.items.firstOrNull()?.let { relationship ->
+            dumpUserPage(relationship.counterpart.identity)
         }
     }
 
+    private suspend fun dumpUserPage(identity: String) {
+        val page = Live.saypip.users().user(
+            UsersUserRequest().also {
+                it.identityToken = identity
+                it.limit = 5
+            },
+        ).data
+        println("USERPAGE label=${page.person.label} posts=${page.posts.size} " +
+            "next=${page.postsNextCursor != null} " +
+            "friend=${page.relationship?.friendSince != null}")
+    }
+
     @Test
-    fun testRelationshipsAndRequests() = runBlocking {
+    fun testRelationshipsAndRequests(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val relationships = Live.saypip.relationships().list(RelationshipsListRequest()).data
@@ -157,7 +173,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testNotifications() = runBlocking {
+    fun testNotifications(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val list = Live.saypip.notifications().list(
@@ -171,7 +187,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testMePostsAndApps() = runBlocking {
+    fun testMePostsAndApps(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val posts = Live.saypip.me().posts(MePostsRequest().also { it.limit = 5 }).data
@@ -185,7 +201,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testMutesAndWordMutes() = runBlocking {
+    fun testMutesAndWordMutes(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val mutes = Live.saypip.mutes().list(MutesListRequest()).data
@@ -199,7 +215,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testConversations() = runBlocking {
+    fun testConversations(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val list = Live.saypip.conversations().list(
@@ -220,7 +236,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testLinksPreview() = runBlocking {
+    fun testLinksPreview(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val preview = Live.saypip.links().preview(
@@ -231,7 +247,7 @@ class LiveReadTest {
     }
 
     @Test
-    fun testNotFoundIsTyped() = runBlocking {
+    fun testNotFoundIsTyped(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val exception = assertFailsWith<SaypipException> {

@@ -5,6 +5,10 @@ import work.socialhub.ksaypip.api.request.feed.FeedFeedRequest
 import work.socialhub.ksaypip.api.request.media.MediaBytesRequest
 import work.socialhub.ksaypip.api.request.media.MediaSetAltRequest
 import work.socialhub.ksaypip.api.request.media.MediaUploadRequest
+import work.socialhub.ksaypip.api.request.me.MeArrangeAsideWidgetsRequest
+import work.socialhub.ksaypip.api.request.me.MePinSubjectRequest
+import work.socialhub.ksaypip.api.request.me.MeReorderPinnedSubjectsRequest
+import work.socialhub.ksaypip.api.request.me.MeUnpinSubjectRequest
 import work.socialhub.ksaypip.api.request.me.MeMeRequest
 import work.socialhub.ksaypip.api.request.mutes.MutesListRequest
 import work.socialhub.ksaypip.api.request.mutes.MutesMuteRequest
@@ -42,7 +46,7 @@ class LiveWriteTest {
     private val stamp: Long = System.currentTimeMillis()
 
     @Test
-    fun testPostLifecycle() = runBlocking {
+    fun testPostLifecycle(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val body = "ksaypip live test $stamp"
@@ -141,7 +145,7 @@ class LiveWriteTest {
     }
 
     @Test
-    fun testMediaUpload() = runBlocking {
+    fun testMediaUpload(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val onePixelPng = Base64.getDecoder().decode(
@@ -209,7 +213,7 @@ class LiveWriteTest {
     }
 
     @Test
-    fun testMuteByPostAndUnmute() = runBlocking {
+    fun testMuteByPostAndUnmute(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val feed = Live.saypip.feed().feed(FeedFeedRequest().also { it.limit = 20 }).data
@@ -239,7 +243,7 @@ class LiveWriteTest {
     }
 
     @Test
-    fun testWordMuteWindowAndForget() = runBlocking {
+    fun testWordMuteWindowAndForget(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val word = "ksaypiplivetest"
@@ -277,7 +281,52 @@ class LiveWriteTest {
     }
 
     @Test
-    fun testNotificationsRead() = runBlocking {
+    fun testPinnedSubjectsAndAsideWidgets(): Unit = runBlocking {
+        if (!Live.enabled) return@runBlocking
+
+        val before = Live.saypip.me().me(MeMeRequest()).data
+        val widgets = before.asideWidgets.toList()
+        println("BEFORE pinned=${before.pinnedSubjects.toList()}")
+
+        // Putting a subject on is idempotent, and the answer is the whole row.
+        val once = Live.saypip.me().pinSubject(
+            MePinSubjectRequest().also { it.tag = "猫" },
+        ).data.items.toList()
+        assertTrue(once.contains("猫"))
+
+        val twice = Live.saypip.me().pinSubject(
+            MePinSubjectRequest().also { it.tag = "猫" },
+        ).data.items.toList()
+        assertEquals(once, twice)
+        println("PINNED ${once}")
+
+        // The order is the resource: the whole row is sent as one rearrangement.
+        val reversed = once.reversed().toTypedArray()
+        val reordered = Live.saypip.me().reorderPinnedSubjects(
+            MeReorderPinnedSubjectsRequest().also { it.items = reversed },
+        ).data.items.toList()
+        assertEquals(once.reversed(), reordered)
+        println("REORDERED ${reordered}")
+
+        val after = Live.saypip.me().unpinSubject(
+            MeUnpinSubjectRequest().also { it.tag = "猫" },
+        ).data.items.toList()
+        assertFalse(after.contains("猫"))
+        println("UNPINNED ${after}")
+
+        // The right-hand column is the same shape: every widget, in the arranged order.
+        val arranged = Live.saypip.me().arrangeAsideWidgets(
+            MeArrangeAsideWidgetsRequest().also { it.items = widgets.toTypedArray() },
+        ).data.items.toList()
+        assertEquals(
+            widgets.map { it.widget to it.visible },
+            arranged.map { it.widget to it.visible },
+        )
+        println("WIDGETS ${arranged.map { "${it.widget}=${it.visible}" }}")
+    }
+
+    @Test
+    fun testNotificationsRead(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val before = Live.saypip.notifications().list(
