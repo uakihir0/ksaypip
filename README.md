@@ -24,7 +24,7 @@ viewer-scoped identities, its 7-day reading window, and the one path in: OAuth 2
 | `core` | The API client: reader view, posts, conversations, relationships, notifications, mutes, media, and so on |
 | `auth` | OAuth 2.1 authorization code flow with PKCE, refresh and revoke |
 | `stream` | The Global Room WebSocket: `post.created` / `post.deleted` frames |
-| `all` | All of the above, packaged for CocoaPods / SPM / JavaScript; the JavaScript target carries `core` and `auth` (the stream needs a handshake header a browser cannot set) |
+| `all` | All of the above, packaged for CocoaPods / SPM / JavaScript; the JavaScript stream is visitor-only, as a browser cannot set a handshake header |
 
 ## Usage
 
@@ -211,9 +211,9 @@ room.open()   // suspend: receives frames until the connection ends or close() i
 ```
 
 There is no resume and no replay: every reconnect refetches the first feed page, and a frame
-missed while the socket was down comes back that way or not at all. The stream has no JavaScript
-target — the browser WebSocket API cannot set an `Authorization` header, so the door is a
-non-browser one.
+missed while the socket was down comes back that way or not at all. On JavaScript the room is
+visitor-only — the browser WebSocket API cannot set an `Authorization` header, so a non-empty
+token is refused rather than listened with as somebody else.
 
 ## What an application can reach
 

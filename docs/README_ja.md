@@ -21,7 +21,7 @@ Saypip はセミアノニマスな SNS です。全員が匿名で読み書き�
 | `core` | API クライアント本体（フィード、投稿、会話、関係、通知、ミュート、メディアなど） |
 | `auth` | OAuth 2.1 authorization code フロー（PKCE、refresh、revoke） |
 | `stream` | Global Room の WebSocket（`post.created` / `post.deleted` フレーム） |
-| `all` | 上記すべてをまとめたもの。JavaScript ターゲットは `core` と `auth` のみ（stream はブラウザが設定できない handshake ヘッダを必要とするため） |
+| `all` | 上記すべてをまとめたもの。JavaScript の stream は visitor 専用（ブラウザは handshake ヘッダを設定できないため） |
 
 ## 使い方
 
@@ -197,7 +197,7 @@ room.register(
 room.open()   // suspend: 接続が切れるか close() するまでフレームを受け取る
 ```
 
-resume も replay もありません。再接続のたびにフィードの先頭ページを読み直し、切断中に逃したフレームはその方法で戻ってくるか、戻ってきません。stream に JavaScript ターゲットはありません（ブラウザの WebSocket API は `Authorization` ヘッダを設定できないため、non-browser 向けのドアです）。
+resume も replay もありません。再接続のたびにフィードの先頭ページを読み直し、切断中に逃したフレームはその方法で戻ってくるか、戻ってきません。JavaScript では room は visitor 専用です（ブラウザの WebSocket API は `Authorization` ヘッダを設定できないため、空でないトークンは別人として聴くのではなく拒否されます）。
 
 ## アプリケーションが到達できる範囲
 

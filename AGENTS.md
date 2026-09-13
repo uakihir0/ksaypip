@@ -31,12 +31,12 @@ this library follows it.
   - `internal/` — implementations and HTTP plumbing
   - `util/` — `toBlocking`, header and media-type names
 - **`auth/`**: OAuth 2.1 (authorization code + PKCE, refresh, revoke).
-- **`stream/`**: the Global Room WebSocket. No JavaScript target: the token is a header on the
-  handshake, which the browser WebSocket API cannot set (Saypip ADR-0028). Frames are
-  `post.created` / `post.deleted` and carry a post ID and nothing else (INV-02) — the post is
-  read back over HTTP. There is no client → server message and no replay.
-- **`all/`**: all modules in one artifact for CocoaPods / SPM / JS; the JavaScript target carries
-  `core` and `auth` only.
+- **`stream/`**: the Global Room WebSocket. Frames are `post.created` / `post.deleted` and carry
+  a post ID and nothing else (INV-02) — the post is read back over HTTP. There is no
+  client → server message and no replay. On JavaScript the room is visitor-only: the token goes
+  in an `Authorization` header on the handshake, which the browser WebSocket API cannot set
+  (Saypip ADR-0028), and a non-empty token is refused rather than silently dropped.
+- **`all/`**: all modules in one artifact for CocoaPods / SPM / JS.
 - **`plugins/`, `tool/`**: build configuration.
 
 ## Implementation Rules
