@@ -34,7 +34,7 @@ class AuthorizationCodeExchangeTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
-    fun exchangeCodeAndStoreTokens() = runBlocking {
+    fun exchangeCodeAndStoreTokens(): Unit = runBlocking {
         val contextFile = File("../build/oauth-context.json")
         val callbackFile = File("../build/oauth-callback.json")
         if (!contextFile.exists() || !callbackFile.exists()) return@runBlocking

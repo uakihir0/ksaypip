@@ -14,7 +14,7 @@ import kotlin.test.assertFailsWith
 class LiveErrorTest {
 
     @Test
-    fun testABadTokenIsUnauthenticated() = runBlocking {
+    fun testABadTokenIsUnauthenticated(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val wrong = SaypipFactory.instance(Live.server, "not-a-real-token")
@@ -27,7 +27,7 @@ class LiveErrorTest {
     }
 
     @Test
-    fun testAShortPhraseIsAValidationError() = runBlocking {
+    fun testAShortPhraseIsAValidationError(): Unit = runBlocking {
         if (!Live.enabled) return@runBlocking
 
         val exception = assertFailsWith<SaypipException> {

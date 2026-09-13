@@ -29,7 +29,7 @@ import kotlin.test.assertTrue
 class LiveStreamTest {
 
     @Test
-    fun readAPostedAndDeletedFrameBack() = runBlocking {
+    fun readAPostedAndDeletedFrameBack(): Unit = runBlocking {
         val secretsFile = File("../secrets.json")
         if (!secretsFile.exists()) return@runBlocking
 

@@ -21,7 +21,7 @@ class LiveRefreshTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
-    fun refreshTheGrant() = runBlocking {
+    fun refreshTheGrant(): Unit = runBlocking {
         val secretsFile = File("../secrets.json")
         if (!secretsFile.exists()) return@runBlocking
 
