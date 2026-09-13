@@ -19,7 +19,7 @@ class OAuthTokenResponse {
     var tokenType: String = ""
 
     @SerialName("expires_in")
-    var expiresIn: Long = -1
+    var expiresIn: Int = -1
 
     @SerialName("refresh_token")
     var refreshToken: String? = null

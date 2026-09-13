@@ -101,7 +101,7 @@ class OAuthFlowTest {
 
         assertEquals("at_1", token.accessToken)
         assertEquals("Bearer", token.tokenType)
-        assertEquals(3600L, token.expiresIn)
+        assertEquals(3600, token.expiresIn)
         assertEquals("rt_1", token.refreshToken)
     }
 
