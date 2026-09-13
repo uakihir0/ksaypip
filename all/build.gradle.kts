@@ -56,15 +56,6 @@ kotlin {
         commonMain.dependencies {
             api(project(":core"))
             api(project(":auth"))
-        }
-
-        // The stream has no JavaScript target: a handshake header is what a token door needs,
-        // and the browser WebSocket API cannot set one.
-        jvmMain.dependencies {
-            api(project(":stream"))
-        }
-
-        appleMain.dependencies {
             api(project(":stream"))
         }
     }
