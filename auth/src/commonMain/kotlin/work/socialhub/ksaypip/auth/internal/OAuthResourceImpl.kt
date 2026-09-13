@@ -1,6 +1,8 @@
 package work.socialhub.ksaypip.auth.internal
 
 import io.ktor.http.URLBuilder
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import work.socialhub.khttpclient.HttpRequest
 import work.socialhub.khttpclient.HttpResponse
 import work.socialhub.ksaypip.SaypipException
@@ -17,6 +19,7 @@ import work.socialhub.ksaypip.auth.api.entity.oauth.OAuthTokenResponse
 import work.socialhub.ksaypip.auth.helper.PkceHelper
 import work.socialhub.ksaypip.auth.helper.RandomHelper
 import work.socialhub.ksaypip.internal.InternalUtility
+import work.socialhub.ksaypip.util.Headers
 import work.socialhub.ksaypip.util.MediaType
 import work.socialhub.ksaypip.util.toBlocking
 
@@ -98,18 +101,38 @@ class OAuthResourceImpl(
         context: OAuthContext,
         request: OAuthRevokeRequest,
     ): ResponseUnit {
+        val clientId = context.clientId ?: config.clientId
+
         return toBlocking {
-            proceedUnit {
-                HttpRequest()
-                    .url(config.revokeUrl)
-                    .accept(MediaType.JSON)
-                    .pwn("client_id", context.clientId ?: config.clientId)
-                    .pwn("client_secret", config.clientSecret)
-                    .pwn("token", request.token)
-                    .pwn("token_type_hint", request.tokenTypeHint)
-                    .forceApplicationFormUrlEncoded(true)
-                    .post()
+            try {
+                revokeCall(clientId, request, basic = config.clientSecret != null)
+            } catch (e: SaypipException) {
+                if (config.clientSecret != null && isClientAuthMethodMismatch(e)) {
+                    revokeCall(clientId, request, basic = false)
+                } else {
+                    throw e
+                }
             }
+        }
+    }
+
+    private suspend fun revokeCall(
+        clientId: String,
+        request: OAuthRevokeRequest,
+        basic: Boolean,
+    ): ResponseUnit {
+        return proceedUnit {
+            HttpRequest()
+                .url(config.revokeUrl)
+                .accept(MediaType.JSON)
+                .pwn("client_id", clientId)
+                .also { call ->
+                    call.clientAuth(clientId, basic)
+                    call.pwn("token", request.token)
+                    call.pwn("token_type_hint", request.tokenTypeHint)
+                }
+                .forceApplicationFormUrlEncoded(true)
+                .post()
         }
     }
 
@@ -117,20 +140,63 @@ class OAuthResourceImpl(
         context: OAuthContext,
         fields: Map<String, String>,
     ): Response<OAuthTokenResponse> {
+        val clientId = context.clientId ?: config.clientId
+
         return toBlocking {
-            proceed {
-                HttpRequest()
-                    .url(config.tokenUrl)
-                    .accept(MediaType.JSON)
-                    .pwn("client_id", context.clientId ?: config.clientId)
-                    .pwn("client_secret", config.clientSecret)
-                    .also { request ->
-                        fields.forEach { (key, value) -> request.pwn(key, value) }
-                    }
-                    .forceApplicationFormUrlEncoded(true)
-                    .post()
+            try {
+                tokenCall(clientId, fields, basic = config.clientSecret != null)
+            } catch (e: SaypipException) {
+                if (config.clientSecret != null && isClientAuthMethodMismatch(e)) {
+                    tokenCall(clientId, fields, basic = false)
+                } else {
+                    throw e
+                }
             }
         }
+    }
+
+    private suspend fun tokenCall(
+        clientId: String,
+        fields: Map<String, String>,
+        basic: Boolean,
+    ): Response<OAuthTokenResponse> {
+        return proceed {
+            HttpRequest()
+                .url(config.tokenUrl)
+                .accept(MediaType.JSON)
+                .pwn("client_id", clientId)
+                .also { call ->
+                    call.clientAuth(clientId, basic)
+                    fields.forEach { (key, value) -> call.pwn(key, value) }
+                }
+                .forceApplicationFormUrlEncoded(true)
+                .post()
+        }
+    }
+
+    /**
+     * A confidential client authenticates at the token endpoint by one of two methods, and the
+     * register decides which: `client_secret_basic` puts the pair in an `Authorization` header,
+     * `client_secret_post` puts the secret in the body. The register does not publish which, so
+     * the header is tried first — the protocol's default — and the body is the fallback on the
+     * refusal that says so.
+     */
+    @OptIn(ExperimentalEncodingApi::class)
+    private fun HttpRequest.clientAuth(
+        clientId: String,
+        basic: Boolean,
+    ): HttpRequest {
+        val secret = config.clientSecret ?: return this
+        if (basic) {
+            val credentials = Base64.encode("$clientId:$secret".encodeToByteArray())
+            return header(Headers.AUTHORIZATION, "Basic $credentials")
+        }
+        return pwn("client_secret", secret)
+    }
+
+    private fun isClientAuthMethodMismatch(e: SaypipException): Boolean {
+        return (e.status == 400 || e.status == 401) &&
+            (e.body?.contains("client_secret") == true)
     }
 
     private fun HttpRequest.pwn(
