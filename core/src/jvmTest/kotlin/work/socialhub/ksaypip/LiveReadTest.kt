@@ -11,6 +11,7 @@ import work.socialhub.ksaypip.api.request.feed.FeedTagRequest
 import work.socialhub.ksaypip.api.request.feed.FeedTalkRequest
 import work.socialhub.ksaypip.api.request.feed.FeedTrendsRequest
 import work.socialhub.ksaypip.api.request.friendrequests.FriendRequestsListRequest
+import work.socialhub.ksaypip.api.request.links.LinksImageRequest
 import work.socialhub.ksaypip.api.request.links.LinksPreviewRequest
 import work.socialhub.ksaypip.api.request.me.MeMeRequest
 import work.socialhub.ksaypip.api.request.me.MePostsRequest
@@ -25,6 +26,7 @@ import work.socialhub.ksaypip.api.request.wordmutes.WordMutesListRequest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Every read the client offers, against the deployment in `secrets.json`.
@@ -244,6 +246,27 @@ class LiveReadTest {
         ).data
         println("LINK title=${preview.title} description=${preview.description} " +
             "image=${preview.imageUrl != null}")
+    }
+
+    @Test
+    fun testLinkImage(): Unit = runBlocking {
+        if (!Live.enabled) return@runBlocking
+
+        // A far-side picture travels through the Worker: this page's card image is on GitHub's
+        // host, so the bytes come back from this origin.
+        val url = "https://github.com/uakihir0/ksaypip"
+        val preview = Live.saypip.links().preview(
+            LinksPreviewRequest().also { it.url = url },
+        ).data
+        println("LINK-IMAGE preview title=${preview.title} image=${preview.imageUrl}")
+
+        if (preview.imageUrl != null) {
+            val bytes = Live.saypip.links().image(
+                LinksImageRequest().also { it.url = url },
+            ).data
+            assertTrue(bytes.isNotEmpty())
+            println("LINK-IMAGE bytes=${bytes.size}")
+        }
     }
 
     @Test
