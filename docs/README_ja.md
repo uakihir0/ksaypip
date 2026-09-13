@@ -20,7 +20,8 @@ Saypip はセミアノニマスな SNS です。全員が匿名で読み書き�
 | --- | --- |
 | `core` | API クライアント本体（フィード、投稿、会話、関係、通知、ミュート、メディアなど） |
 | `auth` | OAuth 2.1 authorization code フロー（PKCE、refresh、revoke） |
-| `all` | 上記2つをまとめ、CocoaPods / SPM / JavaScript 向けにパッケージしたもの |
+| `stream` | Global Room の WebSocket（`post.created` / `post.deleted` フレーム） |
+| `all` | 上記すべてをまとめたもの。JavaScript ターゲットは `core` と `auth` のみ（stream はブラウザが設定できない handshake ヘッダを必要とするため） |
 
 ## 使い方
 
@@ -165,6 +166,38 @@ saypip.feedback().send(FeedbackSendRequest().also { it.message = "..." })
 ```
 
 `Saypip.posts()` や `Saypip.feed()` などの各メソッドには JVM / native 向けの `*Blocking` 版もあります。JavaScript では suspend 関数を使います。
+
+### リアルタイム（Global Room）
+
+`read` スコープを持つベアラートークンは、handshake の `Authorization` ヘッダとして提示することで Global Room のソケットを開けます。フレームは投稿そのものではなく通知（type と post ID）なので、投稿はフィードから読み直します。
+
+```kotlin
+import work.socialhub.ksaypip.domain.RealtimeEventType
+import work.socialhub.ksaypip.stream.SaypipEx.stream
+import work.socialhub.ksaypip.stream.listener.LifeCycleListener
+import work.socialhub.ksaypip.stream.listener.RoomStreamListener
+
+val room = saypip.stream().roomStream()
+room.register(
+    listener = object : RoomStreamListener {
+        override fun onEvent(event: RealtimeEvent) {
+            when (event.type) {
+                RealtimeEventType.POST_CREATED -> println("new: ${event.postId}")
+                RealtimeEventType.POST_DELETED -> println("gone: ${event.postId}")
+            }
+        }
+    },
+    lifeCycle = object : LifeCycleListener {
+        override fun onConnect() {}
+        override fun onDisconnect() {}
+        override fun onError(e: Exception) {}
+    },
+)
+
+room.open()   // suspend: 接続が切れるか close() するまでフレームを受け取る
+```
+
+resume も replay もありません。再接続のたびにフィードの先頭ページを読み直し、切断中に逃したフレームはその方法で戻ってくるか、戻ってきません。stream に JavaScript ターゲットはありません（ブラウザの WebSocket API は `Authorization` ヘッダを設定できないため、non-browser 向けのドアです）。
 
 ## アプリケーションが到達できる範囲
 

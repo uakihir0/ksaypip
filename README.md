@@ -23,7 +23,8 @@ viewer-scoped identities, its 7-day reading window, and the one path in: OAuth 2
 | --- | --- |
 | `core` | The API client: reader view, posts, conversations, relationships, notifications, mutes, media, and so on |
 | `auth` | OAuth 2.1 authorization code flow with PKCE, refresh and revoke |
-| `all` | Both of the above, packaged for CocoaPods / SPM / JavaScript |
+| `stream` | The Global Room WebSocket: `post.created` / `post.deleted` frames |
+| `all` | All of the above, packaged for CocoaPods / SPM / JavaScript; the JavaScript target carries `core` and `auth` (the stream needs a handshake header a browser cannot set) |
 
 ## Usage
 
@@ -176,6 +177,43 @@ saypip.feedback().send(FeedbackSendRequest().also { it.message = "..." })
 
 `Saypip.posts()`, `Saypip.feed()` and the rest each have a `*Blocking` twin for JVM and native
 callers; JavaScript uses the suspend functions.
+
+### The room, live
+
+A bearer token with `read` may open the Global Room socket, presenting itself as an
+`Authorization` header on the handshake. A frame is a notification and not a post — a type and a
+post ID — so read the post back through the feed:
+
+```kotlin
+import work.socialhub.ksaypip.domain.RealtimeEventType
+import work.socialhub.ksaypip.stream.SaypipEx.stream
+import work.socialhub.ksaypip.stream.listener.LifeCycleListener
+import work.socialhub.ksaypip.stream.listener.RoomStreamListener
+
+val room = saypip.stream().roomStream()
+room.register(
+    listener = object : RoomStreamListener {
+        override fun onEvent(event: RealtimeEvent) {
+            when (event.type) {
+                RealtimeEventType.POST_CREATED -> println("new: ${event.postId}")
+                RealtimeEventType.POST_DELETED -> println("gone: ${event.postId}")
+            }
+        }
+    },
+    lifeCycle = object : LifeCycleListener {
+        override fun onConnect() {}
+        override fun onDisconnect() {}
+        override fun onError(e: Exception) {}
+    },
+)
+
+room.open()   // suspend: receives frames until the connection ends or close() is called
+```
+
+There is no resume and no replay: every reconnect refetches the first feed page, and a frame
+missed while the socket was down comes back that way or not at all. The stream has no JavaScript
+target — the browser WebSocket API cannot set an `Authorization` header, so the door is a
+non-browser one.
 
 ## What an application can reach
 

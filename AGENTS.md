@@ -31,7 +31,12 @@ this library follows it.
   - `internal/` — implementations and HTTP plumbing
   - `util/` — `toBlocking`, header and media-type names
 - **`auth/`**: OAuth 2.1 (authorization code + PKCE, refresh, revoke).
-- **`all/`**: both modules in one artifact for CocoaPods / SPM / JS.
+- **`stream/`**: the Global Room WebSocket. No JavaScript target: the token is a header on the
+  handshake, which the browser WebSocket API cannot set (Saypip ADR-0028). Frames are
+  `post.created` / `post.deleted` and carry a post ID and nothing else (INV-02) — the post is
+  read back over HTTP. There is no client → server message and no replay.
+- **`all/`**: all modules in one artifact for CocoaPods / SPM / JS; the JavaScript target carries
+  `core` and `auth` only.
 - **`plugins/`, `tool/`**: build configuration.
 
 ## Implementation Rules
@@ -58,9 +63,10 @@ this library follows it.
 ## Testing
 
 ```shell
-./gradlew :core:jvmTest   # offline: serialization, request construction, error mapping
-./gradlew :auth:jvmTest   # offline: PKCE (RFC 7636 vector) and the OAuth flow vs a local server
-./gradlew jvmJar          # compile check without tests
+./gradlew :core:jvmTest     # offline: serialization, request construction, error mapping
+./gradlew :auth:jvmTest     # offline: PKCE (RFC 7636 vector) and the OAuth flow vs a local server
+./gradlew :stream:jvmTest   # offline: the room address and the frame parser
+./gradlew jvmJar            # compile check without tests
 ```
 
 Tests do not touch the network. Request construction is checked against a JDK `HttpServer`, which
