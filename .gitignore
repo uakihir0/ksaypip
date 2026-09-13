@@ -1,0 +1,13 @@
+*.iml
+.kiro
+.idea
+.gradle
+.gradle-home
+.kotlin
+target/
+build/
+out/
+secrets.json
+jwt.txt
+kotlin-js-store/
+/local.properties
