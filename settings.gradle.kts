@@ -14,4 +14,5 @@ plugins {
 rootProject.name = "ksaypip"
 include("core")
 include("auth")
+include("stream")
 include("all")
