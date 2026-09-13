@@ -15,9 +15,16 @@ kotlin {
         }
     }
 
-    // No JavaScript target on purpose: the room over a token presents the credential as an
-    // `Authorization` header on the handshake, and the browser WebSocket API cannot set one.
-    // The door is a non-browser one (docs/adr/0028 in the Saypip repository).
+    // A browser cannot set a header on a WebSocket handshake (Saypip ADR-0028), so the
+    // JavaScript target listens as a visitor: a token is refused rather than silently dropped.
+    js {
+        nodejs()
+        browser()
+
+        compilerOptions {
+            target.set("es2015")
+        }
+    }
 
     if (HostManager.hostIsMac) {
         iosX64()

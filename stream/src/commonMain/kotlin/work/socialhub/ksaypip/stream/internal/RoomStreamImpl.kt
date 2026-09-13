@@ -28,6 +28,16 @@ class RoomStreamImpl(
         val listener = checkNotNull(listener) { "listener is required" }
         val lifeCycle = checkNotNull(lifeCycle) { "lifeCycle is required" }
 
+        // A browser cannot put a header on the handshake, so a token there would silently become
+        // a visitor's seat; refuse it instead of listening for the wrong reader.
+        if (accessToken.isNotEmpty() && !presentsHandshakeHeader) {
+            throw UnsupportedOperationException(
+                "A browser WebSocket cannot present an Authorization header: the room is " +
+                    "visitor-only on JavaScript. Listen with an empty access token, or use a " +
+                    "native, desktop or server-side client."
+            )
+        }
+
         val client = StreamClient(StreamEndpoint.webSocketUrl(uri), accessToken)
             .also { this.client = it }
 
