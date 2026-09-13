@@ -20,12 +20,12 @@ Saypip はセミアノニマスな SNS です。全員が匿名で読み書き�
 | --- | --- |
 | `core` | API クライアント本体（フィード、投稿、会話、関係、通知、ミュート、メディアなど） |
 | `auth` | OAuth 2.1 authorization code フロー（PKCE、refresh、revoke） |
-| `all` | 上記2つをまとめ、CocoaPods / SPM 向けにパッケージしたもの。JavaScript ターゲットは PKCE プロバイダに JavaScript ビルドがないため `core` のみを含みます |
+| `all` | 上記2つをまとめ、CocoaPods / SPM / JavaScript 向けにパッケージしたもの |
 
 ## 使い方
 
 Kotlin + Gradle での利用方法は以下の通りです。
-**Apple プラットフォームでは `all` モジュールの XCFramework / CocoaPods 出力を参照してください。JavaScript では TypeScript 定義でクライアントを利用でき、トークンは OAuth フローで別途取得します。**
+**Apple プラットフォームでは `all` モジュールの XCFramework / CocoaPods 出力を、JavaScript では TypeScript 定義を参照してください。**
 各 API の使い方はテストコードを参考にしてください。
 
 ```kotlin:build.gradle.kts

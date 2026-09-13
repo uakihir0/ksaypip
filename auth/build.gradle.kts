@@ -15,6 +15,15 @@ kotlin {
         }
     }
 
+    js {
+        nodejs()
+        browser()
+
+        compilerOptions {
+            target.set("es2015")
+        }
+    }
+
     if (HostManager.hostIsMac) {
         iosX64()
         iosArm64()
@@ -40,6 +49,10 @@ kotlin {
 
         appleMain.dependencies {
             implementation(libs.cryptography.openssl)
+        }
+
+        jsMain.dependencies {
+            implementation(libs.cryptography.webcrypto)
         }
 
         // for test (kotlin/jvm)

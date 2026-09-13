@@ -23,12 +23,12 @@ viewer-scoped identities, its 7-day reading window, and the one path in: OAuth 2
 | --- | --- |
 | `core` | The API client: reader view, posts, conversations, relationships, notifications, mutes, media, and so on |
 | `auth` | OAuth 2.1 authorization code flow with PKCE, refresh and revoke |
-| `all` | Both of the above, packaged for CocoaPods / SPM; the JavaScript target carries `core` only, as the PKCE provider has no JavaScript build |
+| `all` | Both of the above, packaged for CocoaPods / SPM / JavaScript |
 
 ## Usage
 
 Below is how to use it in Kotlin with Gradle on supported platforms.
-**If you want to use it on Apple platforms, please refer to the `all` module's XCFramework / CocoaPods output; for JavaScript, its TypeScript definitions cover the client, with the token obtained through the OAuth flow out of band.**
+**If you want to use it on Apple platforms, please refer to the `all` module's XCFramework / CocoaPods output, and for JavaScript its TypeScript definitions.**
 Please refer to the test code for how to use each API.
 
 ```kotlin:build.gradle.kts

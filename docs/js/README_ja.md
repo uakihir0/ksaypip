@@ -6,7 +6,7 @@
 そのため、Web アプリケーションなどでも利用できます。
 また、このリポジトリは [ksaypip] の GitHub Actions によって自動的にコミットされます。Issue や Pull Request は [ksaypip] へお願いします。
 
-このパッケージに含まれるのはクライアント（`core`）です。OAuth 2.1 のフローは JavaScript ターゲットには含まれないため、アクセストークンは別途（たとえばサーバーサイドで）取得し、`SaypipFactory.instance` に渡してください。
+このパッケージにはクライアント（`core`）と OAuth 2.1 のフロー（`auth`）が含まれます。PKCE プロバイダは WebCrypto のため、authorization code フローはブラウザと Node 18+ で動作します。
 
 ## 使い方
 

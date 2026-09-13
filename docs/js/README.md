@@ -6,9 +6,8 @@ This repository is the npm repository for [ksaypip]. [ksaypip] is a [Saypip] cli
 Therefore, it can also be used in web applications, among others.
 Additionally, this repository is automatically committed by GitHub Actions for [ksaypip]. Please submit issues or pull requests to [ksaypip].
 
-The package carries the client (`core`). The OAuth 2.1 flow is not part of the JavaScript
-target — obtain an access token out of band (for example, on a server side) and hand it to
-`SaypipFactory.instance`.
+The package carries the client (`core`) and the OAuth 2.1 flow (`auth`). The PKCE provider is
+WebCrypto, so the authorization code flow works in a browser and in Node 18+.
 
 ## Usage
 

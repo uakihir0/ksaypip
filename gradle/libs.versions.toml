@@ -20,6 +20,7 @@ kotest-assertions = { module = "io.kotest:kotest-assertions-core-jvm", version.r
 cryptography-bom = "dev.whyoleg.cryptography:cryptography-bom:0.6.0"
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core" }
 cryptography-openssl = { module = "dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt" }
+cryptography-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto" }
 cryptography-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk" }
 
 # Publishing plugins (for plugins module)

@@ -54,15 +54,6 @@ kotlin {
         }
         commonMain.dependencies {
             api(project(":core"))
-        }
-
-        // The auth module has no JavaScript target (its PKCE provider is not one), so only the
-        // client is packaged for the web.
-        jvmMain.dependencies {
-            api(project(":auth"))
-        }
-
-        appleMain.dependencies {
             api(project(":auth"))
         }
     }
