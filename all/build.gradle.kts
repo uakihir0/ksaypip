@@ -85,3 +85,12 @@ tasks.configureEach {
         mustRunAfter(tasks.matching { it.name.contains("FatFramework") })
     }
 }
+
+tasks.podPublishXCFramework {
+    doLast {
+        providers.exec {
+            executable = "sh"
+            args = listOf(project.projectDir.path + "/../tool/rename_podfile.sh")
+        }.standardOutput.asText.get()
+    }
+}
