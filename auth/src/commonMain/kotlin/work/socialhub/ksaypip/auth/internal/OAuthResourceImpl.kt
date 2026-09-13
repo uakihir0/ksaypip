@@ -69,6 +69,7 @@ class OAuthResourceImpl(
             ?: throw SaypipException("codeVerifier is missing: build the authorization URL first.")
 
         return tokenRequest(
+            context,
             mapOf(
                 "grant_type" to "authorization_code",
                 "code" to code,
@@ -85,6 +86,7 @@ class OAuthResourceImpl(
         val refreshToken = request.refreshToken ?: throw SaypipException("refreshToken is required.")
 
         return tokenRequest(
+            context,
             mapOf(
                 "grant_type" to "refresh_token",
                 "refresh_token" to refreshToken,
@@ -112,6 +114,7 @@ class OAuthResourceImpl(
     }
 
     private fun tokenRequest(
+        context: OAuthContext,
         fields: Map<String, String>,
     ): Response<OAuthTokenResponse> {
         return toBlocking {
@@ -119,7 +122,7 @@ class OAuthResourceImpl(
                 HttpRequest()
                     .url(config.tokenUrl)
                     .accept(MediaType.JSON)
-                    .pwn("client_id", config.clientId)
+                    .pwn("client_id", context.clientId ?: config.clientId)
                     .pwn("client_secret", config.clientSecret)
                     .also { request ->
                         fields.forEach { (key, value) -> request.pwn(key, value) }
