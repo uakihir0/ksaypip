@@ -21,6 +21,9 @@ import work.socialhub.ksaypip.api.request.posts.PostsPostRequest
 import work.socialhub.ksaypip.api.request.posts.PostsReactRequest
 import work.socialhub.ksaypip.api.request.posts.PostsRemoveWantsTalkRequest
 import work.socialhub.ksaypip.api.request.posts.PostsUnreactRequest
+import work.socialhub.ksaypip.api.request.relationships.RelationshipsListRequest
+import work.socialhub.ksaypip.api.request.relationships.RelationshipsRelationshipRequest
+import work.socialhub.ksaypip.api.request.relationships.RelationshipsSetLabelRequest
 import work.socialhub.ksaypip.api.request.wordmutes.WordMutesForgetRequest
 import work.socialhub.ksaypip.api.request.wordmutes.WordMutesListRequest
 import work.socialhub.ksaypip.api.request.wordmutes.WordMutesMuteRequest
@@ -323,6 +326,56 @@ class LiveWriteTest {
             arranged.map { it.widget to it.visible },
         )
         println("WIDGETS ${arranged.map { "${it.widget}=${it.visible}" }}")
+    }
+
+    @Test
+    fun testRelationshipPageAndLabel(): Unit = runBlocking {
+        if (!Live.enabled) return@runBlocking
+
+        val list = Live.saypip.relationships().list(RelationshipsListRequest()).data
+        val summary = list.items.firstOrNull() ?: run {
+            println("RELATIONSHIP skipped: no counterpart on this account yet")
+            return@runBlocking
+        }
+
+        val page = Live.saypip.relationships().relationship(
+            RelationshipsRelationshipRequest().also { it.relationshipId = summary.id },
+        ).data
+        println("REL page note=${page.note} request=${page.friendRequest?.direction} " +
+            "conversations=${page.conversations.size} can=${page.canSendFriendRequest}")
+
+        val originalLabel = page.counterpart.label
+        val originalNote = page.note
+        val originalEmoji = page.counterpart.mark.emoji
+        val originalColor = page.counterpart.mark.color
+
+        val set = Live.saypip.relationships().setLabel(
+            RelationshipsSetLabelRequest().also {
+                it.relationshipId = summary.id
+                it.label = "ksaypip live"
+                it.note = "a live test memo"
+                it.markEmoji = "🐢"
+                it.markColor = "mint"
+            },
+        ).data
+        assertEquals("ksaypip live", set.label)
+        assertEquals("a live test memo", set.note)
+        assertEquals("🐢", set.mark.emoji)
+        println("REL label set: ${set.label} ${set.mark.emoji}/${set.mark.color}")
+
+        // A replacement and not a patch: what was there goes back, nulls included.
+        val restored = Live.saypip.relationships().setLabel(
+            RelationshipsSetLabelRequest().also {
+                it.relationshipId = summary.id
+                it.label = originalLabel
+                it.note = originalNote
+                it.markEmoji = originalEmoji
+                it.markColor = originalColor
+            },
+        ).data
+        assertEquals(originalLabel, restored.label)
+        assertEquals(originalNote, restored.note)
+        println("REL restored: ${restored.label} note=${restored.note}")
     }
 
     @Test
