@@ -7,6 +7,8 @@ import work.socialhub.ksaypip.api.response.Response
 import work.socialhub.ksaypip.api.response.ResponseUnit
 import work.socialhub.ksaypip.internal.InternalUtility.errorOf
 import work.socialhub.ksaypip.internal.InternalUtility.toJson
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.buildJsonObject
 
 abstract class AbstractResourceImpl(
     val uri: String,
@@ -73,6 +75,14 @@ abstract class AbstractResourceImpl(
      */
     inline fun <reified T> HttpRequest.body(obj: T): HttpRequest {
         return json(toJson(obj))
+    }
+
+    /**
+     * A JSON body built field by field, for the requests where an absent field and an explicit
+     * null are different statements.
+     */
+    fun HttpRequest.jsonBody(build: JsonObjectBuilder.() -> Unit): HttpRequest {
+        return json(buildJsonObject(build).toString())
     }
 
     /** A body parameter, omitted when null. */
