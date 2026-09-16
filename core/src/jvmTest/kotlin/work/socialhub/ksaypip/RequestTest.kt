@@ -10,6 +10,7 @@ import work.socialhub.ksaypip.api.request.media.MediaUploadRequest
 import work.socialhub.ksaypip.api.request.mutes.MutesMuteRequest
 import work.socialhub.ksaypip.api.request.posts.PostsCreateRequest
 import work.socialhub.ksaypip.api.request.posts.PostsReactRequest
+import work.socialhub.ksaypip.api.request.posts.PostsStartConversationRequest
 import java.net.InetSocketAddress
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -111,6 +112,25 @@ class RequestTest {
         assertTrue(body.contains("\"body\":\"hello\""))
         assertTrue(body.contains("\"mediaIds\":[\"md_1\",\"md_2\"]"))
         assertTrue(body.contains("\"wantsTalk\":true"))
+        assertTrue(!body.contains("idempotencyKey"))
+    }
+
+    @Test
+    fun testStartConversationPathBodyAndIdempotency() = runBlocking {
+        saypip.posts().startConversation(
+            PostsStartConversationRequest().apply {
+                postId = "p_1"
+                body = "はじめまして"
+                idempotencyKey = "key-2"
+            },
+        )
+
+        assertEquals("POST", method)
+        assertEquals("/api/posts/p_1/conversations", path)
+        assertEquals("key-2", idempotencyKey)
+        assertEquals("application/json", contentType)
+        assertEquals("""{"body":"はじめまして"}""", body)
+        // The key is a header, never a body field.
         assertTrue(!body.contains("idempotencyKey"))
     }
 
