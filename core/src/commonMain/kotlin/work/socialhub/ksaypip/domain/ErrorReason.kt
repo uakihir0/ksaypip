@@ -19,6 +19,7 @@ object ErrorReason {
     const val MEDIA_NOT_DECODABLE = "media_not_decodable"
     const val TOO_MANY_MEDIA = "too_many_media"
     const val TOO_MANY_REACTIONS = "too_many_reactions"
+    const val CANNOT_REACT_TO_OWN_REPLY = "cannot_react_to_own_reply"
     const val MEDIA_ALREADY_ATTACHED = "media_already_attached"
     const val PROFILE_REQUIRED = "profile_required"
     const val TURNSTILE_FAILED = "turnstile_failed"
@@ -28,7 +29,12 @@ object ErrorReason {
     const val TOO_MANY_PINNED_SUBJECTS = "too_many_pinned_subjects"
     const val PINNED_SUBJECTS_CHANGED = "pinned_subjects_changed"
     const val TOO_MANY_WORD_MUTES = "too_many_word_mutes"
+    const val TOO_MANY_WATCHES = "too_many_watches"
     const val WANTS_TALK_ALREADY_OPEN = "wants_talk_already_open"
+    const val IDENTIFIED_NOT_APPROVED = "identified_not_approved"
+    const val IDENTIFIED_APPLICATION_OPEN = "identified_application_open"
+    const val IDENTIFIED_HANDLE_TAKEN = "identified_handle_taken"
+    const val IDENTIFIED_APPLICATION_DECIDED = "identified_application_decided"
 
     val ALL = arrayOf(
         CONVERSATION_THRESHOLD_NOT_MET,
@@ -43,6 +49,7 @@ object ErrorReason {
         MEDIA_NOT_DECODABLE,
         TOO_MANY_MEDIA,
         TOO_MANY_REACTIONS,
+        CANNOT_REACT_TO_OWN_REPLY,
         MEDIA_ALREADY_ATTACHED,
         PROFILE_REQUIRED,
         TURNSTILE_FAILED,
@@ -52,6 +59,11 @@ object ErrorReason {
         TOO_MANY_PINNED_SUBJECTS,
         PINNED_SUBJECTS_CHANGED,
         TOO_MANY_WORD_MUTES,
+        TOO_MANY_WATCHES,
         WANTS_TALK_ALREADY_OPEN,
+        IDENTIFIED_NOT_APPROVED,
+        IDENTIFIED_APPLICATION_OPEN,
+        IDENTIFIED_HANDLE_TAKEN,
+        IDENTIFIED_APPLICATION_DECIDED,
     )
 }

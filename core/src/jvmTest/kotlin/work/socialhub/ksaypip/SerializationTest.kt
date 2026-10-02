@@ -2,12 +2,18 @@ package work.socialhub.ksaypip
 
 import work.socialhub.ksaypip.domain.ConversationSide
 import work.socialhub.ksaypip.domain.MarkColor
+import work.socialhub.ksaypip.domain.WatchMode
 import work.socialhub.ksaypip.entity.Conversation
 import work.socialhub.ksaypip.entity.Feed
+import work.socialhub.ksaypip.entity.IdentifiedPage
 import work.socialhub.ksaypip.entity.Me
 import work.socialhub.ksaypip.entity.Notification
 import work.socialhub.ksaypip.entity.Person
 import work.socialhub.ksaypip.entity.Post
+import work.socialhub.ksaypip.entity.Reply
+import work.socialhub.ksaypip.entity.ReplyReactions
+import work.socialhub.ksaypip.entity.UserPage
+import work.socialhub.ksaypip.entity.WatchList
 import work.socialhub.ksaypip.entity.WordMuteList
 import work.socialhub.ksaypip.internal.InternalUtility.fromJson
 import kotlin.test.Test
@@ -25,13 +31,14 @@ class SerializationTest {
             {
               "identity": "vi_tok_8F3K",
               "label": "the game person",
-              "mark": { "emoji": "🐢", "color": "mint" },
+              "mark": { "emoji": "🐢", "colors": ["mint", "sage"] },
               "profile": {
                 "displayName": "Someone",
                 "bio": null,
                 "avatarUrl": "https://example.com/a.webp",
                 "bannerUrl": null
-              }
+              },
+              "identified": null
             }
             """.trimIndent(),
         )
@@ -39,10 +46,38 @@ class SerializationTest {
         assertEquals("vi_tok_8F3K", person.identity)
         assertEquals("the game person", person.label)
         assertEquals("🐢", person.mark.emoji)
-        assertEquals(MarkColor.MINT, person.mark.color)
+        assertEquals(listOf(MarkColor.MINT, MarkColor.SAGE), person.mark.colors?.toList())
         assertNotNull(person.profile)
         assertEquals("Someone", person.profile?.displayName)
         assertNull(person.profile?.bannerUrl)
+        assertNull(person.identified)
+    }
+
+    @Test
+    fun testIdentifiedPersonHasNoViewerIdentity() {
+        val person = fromJson<Person>(
+            """
+            {
+              "identity": null,
+              "label": null,
+              "mark": { "emoji": null, "colors": null },
+              "profile": null,
+              "identified": {
+                "handle": "foo",
+                "displayName": "Foo",
+                "avatarUrl": "https://example.com/foo.webp",
+                "verified": true,
+                "operator": false
+              }
+            }
+            """.trimIndent(),
+        )
+
+        assertNull(person.identity)
+        val identified = assertNotNull(person.identified)
+        assertEquals("foo", identified.handle)
+        assertTrue(identified.verified)
+        assertTrue(!identified.operator)
     }
 
     @Test
@@ -61,8 +96,10 @@ class SerializationTest {
               "reactions": [ { "emoji": "🎉", "count": 3, "mine": true } ],
               "conversations": { "count": 2, "mine": false, "lastReply": { "body": "hi", "side": "b" } },
               "wantsTalk": false,
+              "everyone": false,
+              "identified": false,
               "author": null,
-              "authorColor": "sage",
+              "authorColors": ["sage", "mint"],
               "isMine": false,
               "readableUntil": "2026-08-26T09:00:00.000Z",
               "replyTo": {
@@ -81,7 +118,9 @@ class SerializationTest {
         assertTrue(post.reactions[0].mine)
         assertEquals(2, post.conversations.count)
         assertEquals(ConversationSide.B, post.conversations.lastReply?.side)
-        assertEquals(MarkColor.SAGE, post.authorColor)
+        assertTrue(!post.everyone)
+        assertTrue(!post.identified)
+        assertEquals(listOf(MarkColor.SAGE, MarkColor.MINT), post.authorColors?.toList())
         assertNull(post.author)
         assertNotNull(post.replyTo)
         assertEquals("an older thought", post.replyTo?.body)
@@ -167,6 +206,23 @@ class SerializationTest {
         assertEquals("conversation.reply", reply.kind)
         assertEquals("c_1", reply.conversationId)
         assertEquals("an answer", reply.body)
+
+        val replyReaction = fromJson<Notification>(
+            """
+            {
+              "kind": "reply.reaction", "conversationId": "c_1", "replyId": "r_1",
+              "replyBody": "my reply",
+              "reactions": [ { "emoji": "🎉", "count": 1 } ],
+              "person": null, "peopleCount": 1,
+              "arrivedAt": "2026-08-19T09:00:00.000Z", "readAt": null
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals("reply.reaction", replyReaction.kind)
+        assertEquals("r_1", replyReaction.replyId)
+        assertEquals("my reply", replyReaction.replyBody)
+        assertEquals(1, replyReaction.peopleCount)
     }
 
     @Test
@@ -180,6 +236,8 @@ class SerializationTest {
               "unreadConversations": 2,
               "incomingFriendRequests": 3,
               "hasFriends": true,
+              "hasWatches": true,
+              "canPostIdentified": true,
               "wantsTalkPostId": null,
               "pinnedSubjects": ["猫", "天気"],
               "asideWidgets": [
@@ -197,6 +255,8 @@ class SerializationTest {
         assertEquals(2, me.asideWidgets.size)
         assertEquals("trends", me.asideWidgets[1].widget)
         assertTrue(!me.asideWidgets[1].visible)
+        assertTrue(me.hasWatches)
+        assertTrue(me.canPostIdentified)
         assertNull(me.wantsTalkPostId)
     }
 
@@ -217,5 +277,118 @@ class SerializationTest {
         assertEquals(1, list.items.size)
         assertEquals("ネタバレ", list.items[0].word)
         assertTrue(!list.items[0].active)
+    }
+
+    @Test
+    fun testReplyWithIdentifiedAuthorAndReactions() {
+        val reply = fromJson<Reply>(
+            """
+            {
+              "id": "r_1", "body": "under my own name", "createdAt": "2026-09-24T09:00:00.000Z",
+              "side": "b", "isMine": true, "identified": true,
+              "identifiedAuthor": {
+                "handle": "foo", "displayName": "Foo", "avatarUrl": null,
+                "verified": true, "operator": true
+              },
+              "reactions": [ { "emoji": "🎉", "count": 1, "mine": false } ]
+            }
+            """.trimIndent(),
+        )
+
+        assertTrue(reply.identified)
+        assertEquals("foo", reply.identifiedAuthor?.handle)
+        assertTrue(reply.identifiedAuthor?.operator == true)
+        assertEquals(1, reply.reactions.size)
+        assertEquals(1, reply.reactions[0].count)
+    }
+
+    @Test
+    fun testReplyReactions() {
+        val bar = fromJson<ReplyReactions>(
+            """
+            { "reactions": [ { "emoji": "🎉", "count": 2, "mine": true } ] }
+            """.trimIndent(),
+        )
+
+        assertEquals(1, bar.reactions.size)
+        assertEquals(2, bar.reactions[0].count)
+        assertTrue(bar.reactions[0].mine)
+    }
+
+    @Test
+    fun testIdentifiedPage() {
+        val page = fromJson<IdentifiedPage>(
+            """
+            {
+              "handle": "foo",
+              "linkUrl": "https://x.com/foo",
+              "profile": {
+                "displayName": "Foo", "bio": "hello",
+                "avatarUrl": null, "bannerUrl": null
+              },
+              "operator": false,
+              "posts": [],
+              "postsNextCursor": null,
+              "watching": true
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals("foo", page.handle)
+        assertEquals("https://x.com/foo", page.linkUrl)
+        assertEquals("Foo", page.profile.displayName)
+        assertTrue(page.watching)
+        assertTrue(page.posts.isEmpty())
+    }
+
+    @Test
+    fun testWatchListHasBothModes() {
+        val list = fromJson<WatchList>(
+            """
+            {
+              "items": [
+                { "mode": "anonymous",
+                  "person": { "identity": "vi_tok_1", "label": "someone",
+                    "mark": { "emoji": null, "colors": null },
+                    "profile": null, "identified": null },
+                  "createdAt": "2026-09-25T09:00:00.000Z" },
+                { "mode": "identified",
+                  "person": { "identity": null, "label": null,
+                    "mark": { "emoji": null, "colors": null }, "profile": null,
+                    "identified": { "handle": "foo", "displayName": "Foo",
+                      "avatarUrl": null, "verified": true, "operator": false } },
+                  "createdAt": "2026-09-25T10:00:00.000Z" }
+              ]
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(2, list.items.size)
+        assertEquals(WatchMode.ANONYMOUS, list.items[0].mode)
+        assertEquals("vi_tok_1", list.items[0].person.identity)
+        assertEquals(WatchMode.IDENTIFIED, list.items[1].mode)
+        assertNull(list.items[1].person.identity)
+        assertEquals("foo", list.items[1].person.identified?.handle)
+    }
+
+    @Test
+    fun testUserPageCarriesTheMemoAndWatch() {
+        val page = fromJson<UserPage>(
+            """
+            {
+              "person": { "identity": "vi_tok_1", "label": null,
+                "mark": { "emoji": null, "colors": null }, "profile": null,
+                "identified": null },
+              "posts": [],
+              "postsNextCursor": null,
+              "relationship": null,
+              "watching": true,
+              "note": "a private memo"
+            }
+            """.trimIndent(),
+        )
+
+        assertTrue(page.watching)
+        assertEquals("a private memo", page.note)
     }
 }

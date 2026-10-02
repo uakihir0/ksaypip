@@ -11,6 +11,7 @@ import work.socialhub.ksaypip.api.request.feed.FeedTagRequest
 import work.socialhub.ksaypip.api.request.feed.FeedTalkRequest
 import work.socialhub.ksaypip.api.request.feed.FeedTrendsRequest
 import work.socialhub.ksaypip.api.request.friendrequests.FriendRequestsListRequest
+import work.socialhub.ksaypip.api.request.identified.IdentifiedPageRequest
 import work.socialhub.ksaypip.api.request.links.LinksImageRequest
 import work.socialhub.ksaypip.api.request.links.LinksPreviewRequest
 import work.socialhub.ksaypip.api.request.me.MeMeRequest
@@ -22,6 +23,7 @@ import work.socialhub.ksaypip.api.request.posts.PostsPostRequest
 import work.socialhub.ksaypip.api.request.posts.PostsReactionsRequest
 import work.socialhub.ksaypip.api.request.relationships.RelationshipsListRequest
 import work.socialhub.ksaypip.api.request.users.UsersUserRequest
+import work.socialhub.ksaypip.api.request.watches.WatchesListRequest
 import work.socialhub.ksaypip.api.request.wordmutes.WordMutesListRequest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -122,7 +124,8 @@ class LiveReadTest {
             PostsPostRequest().also { it.postId = post.id },
         ).data
         println("SINGLE id=${single.id} mine=${single.isMine} author=${single.author?.identity} " +
-            "color=${single.authorColor} readable=${single.readableUntil != null}")
+            "identified=${single.author?.identified?.handle} " +
+            "colors=${single.authorColors?.toList()} readable=${single.readableUntil != null}")
 
         val reactions = Live.saypip.posts().reactions(
             PostsReactionsRequest().also { it.postId = post.id },
@@ -135,15 +138,26 @@ class LiveReadTest {
         ).data
         println("CONVERSATIONS count=${conversations.items.size}")
 
-        single.author?.let { person ->
-            dumpUserPage(person.identity)
+        single.author?.identity?.let { identity ->
+            dumpUserPage(identity)
+        }
+
+        single.author?.identified?.handle?.let { handle ->
+            val page = Live.saypip.identified().page(
+                IdentifiedPageRequest().also {
+                    it.handle = handle
+                    it.limit = 5
+                },
+            ).data
+            println("IDENTIFIED handle=${page.handle} operator=${page.operator} " +
+                "posts=${page.posts.size} watching=${page.watching} link=${page.linkUrl != null}")
         }
 
         // The viewer's relationships carry an identity for each counterpart, which is the other
         // way a user page is reached.
         val relationships = Live.saypip.relationships().list(RelationshipsListRequest()).data
         relationships.items.firstOrNull()?.let { relationship ->
-            dumpUserPage(relationship.counterpart.identity)
+            relationship.counterpart.identity?.let { dumpUserPage(it) }
         }
     }
 
@@ -155,7 +169,7 @@ class LiveReadTest {
             },
         ).data
         println("USERPAGE label=${page.person.label} posts=${page.posts.size} " +
-            "next=${page.postsNextCursor != null} " +
+            "next=${page.postsNextCursor != null} watching=${page.watching} note=${page.note} " +
             "friend=${page.relationship?.friendSince != null}")
     }
 
@@ -166,7 +180,7 @@ class LiveReadTest {
         val relationships = Live.saypip.relationships().list(RelationshipsListRequest()).data
         println("RELATIONSHIPS count=${relationships.items.size}")
         relationships.items.take(3).forEach {
-            println("  rel=${it.id} counterpart=${it.counterpart.identity.take(12)}… " +
+            println("  rel=${it.id} counterpart=${it.counterpart.identity?.take(12)}… " +
                 "friend=${it.friendSince != null}")
         }
 
@@ -213,6 +227,13 @@ class LiveReadTest {
         println("WORD-MUTES count=${wordMutes.items.size}")
         wordMutes.items.take(3).forEach {
             println("  word=${it.word} active=${it.active} endsAt=${it.endsAt}")
+        }
+
+        val watches = Live.saypip.watches().list(WatchesListRequest()).data
+        println("WATCHES count=${watches.items.size}")
+        watches.items.take(3).forEach {
+            println("  mode=${it.mode} identity=${it.person.identity?.take(12)} " +
+                "handle=${it.person.identified?.handle}")
         }
     }
 

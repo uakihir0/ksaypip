@@ -7,6 +7,7 @@ import work.socialhub.ksaypip.api.ConversationsResource
 import work.socialhub.ksaypip.api.FeedResource
 import work.socialhub.ksaypip.api.FeedbackResource
 import work.socialhub.ksaypip.api.FriendRequestsResource
+import work.socialhub.ksaypip.api.IdentifiedResource
 import work.socialhub.ksaypip.api.LinksResource
 import work.socialhub.ksaypip.api.MeResource
 import work.socialhub.ksaypip.api.MediaResource
@@ -14,8 +15,10 @@ import work.socialhub.ksaypip.api.MutesResource
 import work.socialhub.ksaypip.api.NotificationsResource
 import work.socialhub.ksaypip.api.PostsResource
 import work.socialhub.ksaypip.api.RelationshipsResource
+import work.socialhub.ksaypip.api.RepliesResource
 import work.socialhub.ksaypip.api.ReportsResource
 import work.socialhub.ksaypip.api.UsersResource
+import work.socialhub.ksaypip.api.WatchesResource
 import work.socialhub.ksaypip.api.WordMutesResource
 
 class SaypipImpl(
@@ -26,13 +29,16 @@ class SaypipImpl(
     private val feed: FeedResource = FeedResourceImpl(uri, accessToken)
     private val posts: PostsResource = PostsResourceImpl(uri, accessToken)
     private val conversations: ConversationsResource = ConversationsResourceImpl(uri, accessToken)
+    private val replies: RepliesResource = RepliesResourceImpl(uri, accessToken)
     private val users: UsersResource = UsersResourceImpl(uri, accessToken)
+    private val identified: IdentifiedResource = IdentifiedResourceImpl(uri, accessToken)
     private val relationships: RelationshipsResource = RelationshipsResourceImpl(uri, accessToken)
     private val friendRequests: FriendRequestsResource = FriendRequestsResourceImpl(uri, accessToken)
     private val notifications: NotificationsResource = NotificationsResourceImpl(uri, accessToken)
 
     private val mutes: MutesResource = MutesResourceImpl(uri, accessToken)
     private val wordMutes: WordMutesResource = WordMutesResourceImpl(uri, accessToken)
+    private val watches: WatchesResource = WatchesResourceImpl(uri, accessToken)
 
     private val media: MediaResource = MediaResourceImpl(uri, accessToken)
     private val links: LinksResource = LinksResourceImpl(uri, accessToken)
@@ -47,13 +53,16 @@ class SaypipImpl(
     override fun feed() = feed
     override fun posts() = posts
     override fun conversations() = conversations
+    override fun replies() = replies
     override fun users() = users
+    override fun identified() = identified
     override fun relationships() = relationships
     override fun friendRequests() = friendRequests
     override fun notifications() = notifications
 
     override fun mutes() = mutes
     override fun wordMutes() = wordMutes
+    override fun watches() = watches
 
     override fun media() = media
     override fun links() = links

@@ -26,6 +26,12 @@ class Me {
     /** Whether the friends' timeline is offered at all. A boolean and never a count. */
     var hasFriends: Boolean = false
 
+    /** Whether the connections timeline has a second reason to be offered. */
+    var hasWatches: Boolean = false
+
+    /** Whether this account has a live identified persona, and so whether the mode switch exists. */
+    var canPostIdentified: Boolean = false
+
     /** Which post is still asking to be talked to, or null. One ask at a time. */
     var wantsTalkPostId: String? = null
 

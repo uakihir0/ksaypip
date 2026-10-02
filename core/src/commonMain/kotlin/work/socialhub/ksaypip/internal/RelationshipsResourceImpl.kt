@@ -1,8 +1,5 @@
 package work.socialhub.ksaypip.internal
 
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import work.socialhub.khttpclient.HttpRequest
 import work.socialhub.ksaypip.api.RelationshipsResource
 import work.socialhub.ksaypip.api.request.relationships.RelationshipsListRequest
@@ -64,23 +61,7 @@ class RelationshipsResourceImpl(
                 .url("${uri}/api/relationships/${urlEncode(request.relationshipId.orEmpty())}/label")
                 .header(AUTHORIZATION, bearerToken())
                 .accept(MediaType.JSON)
-                .jsonBody {
-                    put("label", request.label?.let { kotlinx.serialization.json.JsonPrimitive(it) } ?: JsonNull)
-                    put("note", request.note?.let { kotlinx.serialization.json.JsonPrimitive(it) } ?: JsonNull)
-                    put(
-                        "mark",
-                        buildJsonObject {
-                            put(
-                                "emoji",
-                                request.markEmoji?.let { kotlinx.serialization.json.JsonPrimitive(it) } ?: JsonNull,
-                            )
-                            put(
-                                "color",
-                                request.markColor?.let { kotlinx.serialization.json.JsonPrimitive(it) } ?: JsonNull,
-                            )
-                        },
-                    )
-                }
+                .labelBody(request.label, request.note, request.markEmoji, request.markColors)
                 .put()
         }
     }

@@ -67,6 +67,7 @@ class ConversationsResourceImpl(
                 .idempotency(request.idempotencyKey)
                 .jsonBody {
                     putOrNull("body", request.body)
+                    request.identified?.let { put("identified", it) }
                 }
                 .post()
         }
