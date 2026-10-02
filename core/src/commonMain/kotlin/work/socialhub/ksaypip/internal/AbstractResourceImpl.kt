@@ -120,12 +120,12 @@ abstract class AbstractResourceImpl(
         markColors: Array<String>?,
     ): HttpRequest {
         return jsonBody {
-            put("label", label?.let { JsonPrimitive(it) } ?: JsonNull)
-            put("note", note?.let { JsonPrimitive(it) } ?: JsonNull)
+            putOrNull("label", label)
+            putOrNull("note", note)
             put(
                 "mark",
                 buildJsonObject {
-                    put("emoji", markEmoji?.let { JsonPrimitive(it) } ?: JsonNull)
+                    putOrNull("emoji", markEmoji)
                     put(
                         "colors",
                         markColors?.let { colors ->
