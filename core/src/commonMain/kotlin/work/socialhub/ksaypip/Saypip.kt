@@ -26,8 +26,10 @@ import kotlin.js.JsExport
  *
  * Every read and write here is a bearer-token call, so an application is expected to have been
  * authorized through the `auth` module and to hold an access token. Nothing on this interface can
- * reach the cookie-only blocks — the admin area, `GET /me/sign-in`, `DELETE /me`, the push
- * endpoints and the realtime socket — because a token reaches none of them.
+ * reach the cookie-only blocks — the admin area, `GET /me/sign-in`, `DELETE /me`, the
+ * identified-application addresses and the push endpoints — because a token reaches none of
+ * them. The realtime socket is not one of those: `GET /ws` is in the allowlist, and the `stream`
+ * module opens it with the same token.
  */
 @JsExport
 interface Saypip {

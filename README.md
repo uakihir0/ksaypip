@@ -229,9 +229,11 @@ token is refused rather than listened with as somebody else.
 ## What an application can reach
 
 A bearer token can call the routes the API's allowlist names, and nothing else. The admin area,
-`GET /me/sign-in`, `DELETE /me`, the push endpoints and the realtime socket are cookie-only and
-answer an application the same `not_found` a stranger gets. An application sees the reader's own
-view — the same viewer-scoped identities, the same 7-day window, the same block filtering.
+`GET /me/sign-in`, `DELETE /me`, the identified-application addresses and the push endpoints are
+cookie-only and answer an application the same `not_found` a stranger gets. (The realtime socket
+is not among them: `GET /ws` is in the allowlist, and the stream module presents the token on the
+handshake.) An application sees the reader's own view — the same viewer-scoped identities, the
+same 7-day window, the same block filtering.
 
 ## Handling what you receive
 

@@ -12,8 +12,10 @@ Two things shape everything here and should be read before changing anything:
    that are valid for one viewer alone and die with the relationship. Never introduce a model or
    a feature that assumes otherwise.
 2. **A token cannot reach every route.** An allowlist in the API names what an application may
-   call; the admin area, `GET /me/sign-in`, `DELETE /me`, the push endpoints and the realtime
-   socket are cookie-only. Do not add resources for cookie-only routes to `core`.
+   call; the admin area, `GET /me/sign-in`, `DELETE /me`, the identified-application addresses
+   and the push endpoints are cookie-only. Do not add resources for cookie-only routes to
+   `core`. (The realtime socket is not cookie-only: `GET /ws` is in the allowlist, and the
+   `stream` module presents the token on the handshake.)
 
 The authoritative descriptions live in the Saypip repository (`docs/api-design.md`,
 `packages/api-schema/src/routes.ts` and `schemas.ts`). When the deployment's contract changes,
