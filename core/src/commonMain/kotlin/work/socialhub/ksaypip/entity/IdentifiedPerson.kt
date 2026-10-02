@@ -24,7 +24,7 @@ class IdentifiedPerson {
     var avatarUrl: String? = null
 
     /** Always true when the object is present. */
-    var verified: Boolean = false
+    var verified: Boolean = true
 
     /** Whether the account behind the persona is one of this deployment's operators. */
     var operator: Boolean = false

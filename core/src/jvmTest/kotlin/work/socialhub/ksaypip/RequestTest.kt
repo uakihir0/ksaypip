@@ -3,6 +3,7 @@ package work.socialhub.ksaypip
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import work.socialhub.ksaypip.api.request.apps.AppsIconRequest
+import work.socialhub.ksaypip.api.request.conversations.ConversationsReplyRequest
 import work.socialhub.ksaypip.api.request.feed.FeedFeedRequest
 import work.socialhub.ksaypip.api.request.feed.FeedSearchRequest
 import work.socialhub.ksaypip.api.request.feed.FeedTagRequest
@@ -15,7 +16,9 @@ import work.socialhub.ksaypip.api.request.posts.PostsReactRequest
 import work.socialhub.ksaypip.api.request.posts.PostsStartConversationRequest
 import work.socialhub.ksaypip.api.request.relationships.RelationshipsSetLabelRequest
 import work.socialhub.ksaypip.api.request.replies.RepliesReactRequest
+import work.socialhub.ksaypip.api.request.replies.RepliesUnreactRequest
 import work.socialhub.ksaypip.api.request.users.UsersSetLabelRequest
+import work.socialhub.ksaypip.api.request.watches.WatchesListRequest
 import work.socialhub.ksaypip.api.request.watches.WatchesUnwatchIdentifiedRequest
 import work.socialhub.ksaypip.api.request.watches.WatchesUnwatchRequest
 import work.socialhub.ksaypip.api.request.watches.WatchesWatchIdentifiedRequest
@@ -46,6 +49,7 @@ class RequestTest {
     private var authorization = ""
     private var idempotencyKey: String? = null
     private var status = 200
+    private var responseBytes: ByteArray? = null
 
     private val saypip get() = SaypipFactory.instance("http://127.0.0.1:${server.address.port}", "test-token")
 
@@ -64,7 +68,7 @@ class RequestTest {
 
             val payload = """{"error":{"code":"not_found"}}"""
             val outgoing = if (status in 200..299) "{}" else payload
-            val bytes = outgoing.encodeToByteArray()
+            val bytes = responseBytes ?: outgoing.encodeToByteArray()
             exchange.responseHeaders.add("Content-Type", "application/json")
             exchange.sendResponseHeaders(status, bytes.size.toLong())
             exchange.responseBody.write(bytes)
@@ -141,6 +145,36 @@ class RequestTest {
         assertEquals("""{"body":"はじめまして"}""", body)
         // The key is a header, never a body field.
         assertTrue(!body.contains("idempotencyKey"))
+    }
+
+    @Test
+    fun testStartConversationCanBeIdentified() = runBlocking {
+        saypip.posts().startConversation(
+            PostsStartConversationRequest().apply {
+                postId = "p_1"
+                body = "はじめまして"
+                identified = true
+            },
+        )
+
+        assertEquals("""{"body":"はじめまして","identified":true}""", body)
+    }
+
+    @Test
+    fun testConversationReplyCanBeIdentified() = runBlocking {
+        saypip.conversations().reply(
+            ConversationsReplyRequest().apply {
+                conversationId = "c_1"
+                body = "hello"
+                identified = true
+                idempotencyKey = "key-3"
+            },
+        )
+
+        assertEquals("POST", method)
+        assertEquals("/api/conversations/c_1/replies", path)
+        assertEquals("key-3", idempotencyKey)
+        assertEquals("""{"body":"hello","identified":true}""", body)
     }
 
     @Test
@@ -245,6 +279,20 @@ class RequestTest {
     }
 
     @Test
+    fun testReplyUnreactUsesTheEmojiPath() = runBlocking {
+        saypip.replies().unreact(
+            RepliesUnreactRequest().apply {
+                replyId = "r_1"
+                emoji = "🎉"
+            },
+        )
+
+        assertEquals("DELETE", method)
+        assertEquals("/api/replies/r_1/reactions/%F0%9F%8E%89", path)
+        assertEquals("", body)
+    }
+
+    @Test
     fun testSetLabelByIdentityCarriesTheGradient() = runBlocking {
         saypip.users().setLabel(
             UsersSetLabelRequest().apply {
@@ -281,6 +329,15 @@ class RequestTest {
     }
 
     @Test
+    fun testWatchListIsARead() = runBlocking {
+        saypip.watches().list(WatchesListRequest())
+
+        assertEquals("GET", method)
+        assertEquals("/api/watches", path)
+        assertEquals("Bearer test-token", authorization)
+    }
+
+    @Test
     fun testWatchAndUnwatch() = runBlocking {
         saypip.watches().watch(
             WatchesWatchRequest().apply {
@@ -311,6 +368,7 @@ class RequestTest {
 
         assertEquals("POST", method)
         assertEquals("/api/watches/identified", path)
+        assertEquals("watch-2", idempotencyKey)
         assertEquals("""{"handle":"foo"}""", body)
 
         saypip.watches().unwatchIdentified(
@@ -338,11 +396,14 @@ class RequestTest {
 
     @Test
     fun testAppIconComesBackAsBytes() = runBlocking {
+        // The icon is the one read in this suite whose body is not JSON.
+        responseBytes = byteArrayOf(0x52, 0x49, 0x46, 0x46)
+
         val response = saypip.apps().icon(AppsIconRequest().apply { clientId = "saypip_app_1" })
 
         assertEquals("GET", method)
         assertEquals("/api/oauth/app-icon/saypip_app_1", path)
-        assertTrue(response.data.isNotEmpty())
+        assertTrue(response.data.contentEquals(byteArrayOf(0x52, 0x49, 0x46, 0x46)))
     }
 
     @Test

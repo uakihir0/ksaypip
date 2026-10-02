@@ -2,6 +2,7 @@ package work.socialhub.ksaypip
 
 import work.socialhub.ksaypip.domain.ConversationSide
 import work.socialhub.ksaypip.domain.MarkColor
+import work.socialhub.ksaypip.domain.NotificationKind
 import work.socialhub.ksaypip.domain.WatchMode
 import work.socialhub.ksaypip.entity.Conversation
 import work.socialhub.ksaypip.entity.Feed
@@ -128,6 +129,24 @@ class SerializationTest {
     }
 
     @Test
+    fun testPostDefaultsToTheRoomAndTheAnonymousMode() {
+        val post = fromJson<Post>(
+            """
+            {
+              "id": "p_1", "body": "hello", "createdAt": "2026-08-19T09:00:00.000Z",
+              "media": [], "reactions": [],
+              "conversations": { "count": 0, "mine": false, "lastReply": null },
+              "wantsTalk": false, "author": null, "authorColors": null,
+              "isMine": true, "readableUntil": null, "replyTo": null
+            }
+            """.trimIndent(),
+        )
+
+        assertTrue(post.everyone)
+        assertTrue(!post.identified)
+    }
+
+    @Test
     fun testFeed() {
         val feed = fromJson<Feed>(
             """
@@ -150,7 +169,8 @@ class SerializationTest {
               "participants": [
                 { "side": "a", "person": null, "isMe": false },
                 { "side": "b", "person": { "identity": "vi_tok", "label": null,
-                  "mark": { "emoji": null, "color": null }, "profile": null }, "isMe": true }
+                  "mark": { "emoji": null, "colors": null }, "profile": null,
+                  "identified": null }, "isMe": true }
               ],
               "isMine": true,
               "replies": [
@@ -166,6 +186,7 @@ class SerializationTest {
 
         assertEquals(2, conversation.participants.size)
         assertTrue(conversation.participants[1].isMe)
+        assertNull(conversation.participants[1].person?.mark?.colors)
         assertEquals(1, conversation.replies.size)
         assertEquals("first", conversation.replies[0].body)
         assertTrue(conversation.canReply)
@@ -187,7 +208,7 @@ class SerializationTest {
             """.trimIndent(),
         )
 
-        assertEquals("post.reaction", reaction.kind)
+        assertEquals(NotificationKind.POST_REACTION, reaction.kind)
         assertEquals("my post", reaction.postBody)
         assertEquals(1, reaction.reactions?.size)
         assertEquals(2, reaction.peopleCount)
@@ -203,7 +224,7 @@ class SerializationTest {
             """.trimIndent(),
         )
 
-        assertEquals("conversation.reply", reply.kind)
+        assertEquals(NotificationKind.CONVERSATION_REPLY, reply.kind)
         assertEquals("c_1", reply.conversationId)
         assertEquals("an answer", reply.body)
 
@@ -219,7 +240,7 @@ class SerializationTest {
             """.trimIndent(),
         )
 
-        assertEquals("reply.reaction", replyReaction.kind)
+        assertEquals(NotificationKind.REPLY_REACTION, replyReaction.kind)
         assertEquals("r_1", replyReaction.replyId)
         assertEquals("my reply", replyReaction.replyBody)
         assertEquals(1, replyReaction.peopleCount)
