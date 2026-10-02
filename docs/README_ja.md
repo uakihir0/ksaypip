@@ -102,7 +102,8 @@ val feed = saypip.feed().feed(FeedFeedRequest()).data
 feed.items.forEach { post ->
     println(post.body)
     println(post.author?.label)      // 自分が付けた相手の呼び名。見知らぬ相手では null
-    println(post.authorColor)        // author が null のときに描く色
+    println(post.authorColors)       // author が null のときに描くグラデーションの両端
+    println(post.identified)         // 公開ペルソナで書かれた投稿。全員に同じ
     println(post.readableUntil)      // この視聴者が読めなくなる時刻
 }
 
@@ -152,10 +153,20 @@ saypip.conversations().list(ConversationsListRequest())
 saypip.conversations().conversation(
     ConversationsConversationRequest().also { it.conversationId = "c_..." },
 )
+saypip.replies().react(
+    RepliesReactRequest().also { it.replyId = "r_..."; it.emoji = "🎉" },
+)
 saypip.relationships().list(RelationshipsListRequest())
+// 同じローカルなラベル・メモ・マークを、ユーザーページが持つトークンで直接書く
+saypip.users().setLabel(
+    UsersSetLabelRequest().also { it.identityToken = "vi_tok_..."; it.markColors = arrayOf("mint", "sage") },
+)
 saypip.friendRequests().list(FriendRequestsListRequest())
 saypip.notifications().list(NotificationsListRequest())
 saypip.mutes().list(MutesListRequest())
+// つながりタイムライン: この読者が見守っている相手と、ペルソナの公開ページ
+saypip.watches().list(WatchesListRequest())
+saypip.identified().page(IdentifiedPageRequest().also { it.handle = "foo" })
 saypip.media().upload(
     MediaUploadRequest().also {
         it.data = bytes            // image/webp, image/jpeg, image/png

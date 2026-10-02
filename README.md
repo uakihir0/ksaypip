@@ -111,7 +111,8 @@ val feed = saypip.feed().feed(FeedFeedRequest()).data
 feed.items.forEach { post ->
     println(post.body)
     println(post.author?.label)      // the viewer's own name for them, or null for a stranger
-    println(post.authorColor)        // the colour to draw instead, where author is null
+    println(post.authorColors)       // the gradient's two ends to draw where author is null
+    println(post.identified)         // written under a public persona, the same for every reader
     println(post.readableUntil)      // when this viewer stops being able to read it
 }
 
@@ -162,10 +163,20 @@ saypip.conversations().list(ConversationsListRequest())
 saypip.conversations().conversation(
     ConversationsConversationRequest().also { it.conversationId = "c_..." },
 )
+saypip.replies().react(
+    RepliesReactRequest().also { it.replyId = "r_..."; it.emoji = "🎉" },
+)
 saypip.relationships().list(RelationshipsListRequest())
+// The same private label, note and mark, addressable by the token a user page carries.
+saypip.users().setLabel(
+    UsersSetLabelRequest().also { it.identityToken = "vi_tok_..."; it.markColors = arrayOf("mint", "sage") },
+)
 saypip.friendRequests().list(FriendRequestsListRequest())
 saypip.notifications().list(NotificationsListRequest())
 saypip.mutes().list(MutesListRequest())
+// The connections timeline: who this reader keeps, and the public page of a persona.
+saypip.watches().list(WatchesListRequest())
+saypip.identified().page(IdentifiedPageRequest().also { it.handle = "foo" })
 saypip.media().upload(
     MediaUploadRequest().also {
         it.data = bytes            // image/webp, image/jpeg or image/png
