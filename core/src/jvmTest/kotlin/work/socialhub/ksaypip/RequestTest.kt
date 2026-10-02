@@ -183,6 +183,9 @@ class RequestTest {
 
         assertEquals("PUT", method)
         assertEquals("/api/posts/p_1/reactions/%F0%9F%8E%89", path)
+        // No mode is the old write: anonymous, with no body at all.
+        assertEquals("", body)
+        assertEquals("", contentType)
     }
 
     @Test
@@ -276,6 +279,27 @@ class RequestTest {
         assertEquals("PUT", method)
         assertEquals("/api/replies/r_1/reactions/%F0%9F%8E%89", path)
         assertEquals("""{"identified":true}""", body)
+    }
+
+    @Test
+    fun testReplyReactionSendsTheModeOnlyWhenSet() = runBlocking {
+        saypip.replies().react(
+            RepliesReactRequest().apply {
+                replyId = "r_1"
+                emoji = "🎉"
+            },
+        )
+        assertEquals("", body)
+
+        // An explicit false is a mode the caller stated, so it travels.
+        saypip.replies().react(
+            RepliesReactRequest().apply {
+                replyId = "r_1"
+                emoji = "🎉"
+                identified = false
+            },
+        )
+        assertEquals("""{"identified":false}""", body)
     }
 
     @Test
@@ -396,14 +420,15 @@ class RequestTest {
 
     @Test
     fun testAppIconComesBackAsBytes() = runBlocking {
-        // The icon is the one read in this suite whose body is not JSON.
-        responseBytes = byteArrayOf(0x52, 0x49, 0x46, 0x46)
+        // The icon is the one read in this suite whose body is not JSON, and the bytes are ones
+        // a string round-trip would not survive (0x89 and 0x00), so the raw body is what is read.
+        responseBytes = byteArrayOf(0x00, 0x89.toByte(), 0x50, 0x4E)
 
         val response = saypip.apps().icon(AppsIconRequest().apply { clientId = "saypip_app_1" })
 
         assertEquals("GET", method)
         assertEquals("/api/oauth/app-icon/saypip_app_1", path)
-        assertTrue(response.data.contentEquals(byteArrayOf(0x52, 0x49, 0x46, 0x46)))
+        assertTrue(response.data.contentEquals(byteArrayOf(0x00, 0x89.toByte(), 0x50, 0x4E)))
     }
 
     @Test

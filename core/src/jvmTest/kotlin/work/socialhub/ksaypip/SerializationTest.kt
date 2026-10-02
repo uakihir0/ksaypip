@@ -169,7 +169,7 @@ class SerializationTest {
               "participants": [
                 { "side": "a", "person": null, "isMe": false },
                 { "side": "b", "person": { "identity": "vi_tok", "label": null,
-                  "mark": { "emoji": null, "colors": null }, "profile": null,
+                  "mark": { "emoji": null, "colors": ["rose", "sky"] }, "profile": null,
                   "identified": null }, "isMe": true }
               ],
               "isMine": true,
@@ -186,7 +186,11 @@ class SerializationTest {
 
         assertEquals(2, conversation.participants.size)
         assertTrue(conversation.participants[1].isMe)
-        assertNull(conversation.participants[1].person?.mark?.colors)
+        // A pair, so the fixture actually pins the `colors` key and not a vacuously null field.
+        assertEquals(
+            listOf(MarkColor.ROSE, MarkColor.SKY),
+            conversation.participants[1].person?.mark?.colors?.toList(),
+        )
         assertEquals(1, conversation.replies.size)
         assertEquals("first", conversation.replies[0].body)
         assertTrue(conversation.canReply)
@@ -195,7 +199,7 @@ class SerializationTest {
     }
 
     @Test
-    fun testNotificationOfBothKinds() {
+    fun testNotificationOfAllKinds() {
         val reaction = fromJson<Notification>(
             """
             {
