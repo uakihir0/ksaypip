@@ -2,8 +2,10 @@ package work.socialhub.ksaypip.internal
 
 import work.socialhub.khttpclient.HttpRequest
 import work.socialhub.ksaypip.api.UsersResource
+import work.socialhub.ksaypip.api.request.users.UsersSetLabelRequest
 import work.socialhub.ksaypip.api.request.users.UsersUserRequest
 import work.socialhub.ksaypip.api.response.Response
+import work.socialhub.ksaypip.api.response.users.UsersSetLabelResponse
 import work.socialhub.ksaypip.api.response.users.UsersUserResponse
 import work.socialhub.ksaypip.internal.InternalUtility.urlEncode
 import work.socialhub.ksaypip.util.Headers.AUTHORIZATION
@@ -29,5 +31,20 @@ class UsersResourceImpl(
 
     override fun userBlocking(request: UsersUserRequest): Response<UsersUserResponse> {
         return toBlocking { user(request) }
+    }
+
+    override suspend fun setLabel(request: UsersSetLabelRequest): Response<UsersSetLabelResponse> {
+        return proceed {
+            HttpRequest()
+                .url("${uri}/api/users/${urlEncode(request.identityToken.orEmpty())}/label")
+                .header(AUTHORIZATION, bearerToken())
+                .accept(MediaType.JSON)
+                .labelBody(request.label, request.note, request.markEmoji, request.markColors)
+                .put()
+        }
+    }
+
+    override fun setLabelBlocking(request: UsersSetLabelRequest): Response<UsersSetLabelResponse> {
+        return toBlocking { setLabel(request) }
     }
 }

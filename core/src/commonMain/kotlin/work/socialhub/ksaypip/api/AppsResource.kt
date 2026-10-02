@@ -1,9 +1,11 @@
 package work.socialhub.ksaypip.api
 
+import work.socialhub.ksaypip.api.request.apps.AppsIconRequest
 import work.socialhub.ksaypip.api.request.apps.AppsListRequest
 import work.socialhub.ksaypip.api.request.apps.AppsRevokeRequest
 import work.socialhub.ksaypip.api.response.Response
 import work.socialhub.ksaypip.api.response.ResponseUnit
+import work.socialhub.ksaypip.api.response.apps.AppsIconResponse
 import work.socialhub.ksaypip.api.response.apps.AppsListResponse
 import kotlin.js.JsExport
 
@@ -25,4 +27,13 @@ interface AppsResource {
 
     @JsExport.Ignore
     fun revokeBlocking(request: AppsRevokeRequest): ResponseUnit
+
+    /**
+     * The icon an operator imported for a registered application, always WebP bytes. Public and
+     * cacheable; an application with no icon is a not-found.
+     */
+    suspend fun icon(request: AppsIconRequest): Response<AppsIconResponse>
+
+    @JsExport.Ignore
+    fun iconBlocking(request: AppsIconRequest): Response<AppsIconResponse>
 }

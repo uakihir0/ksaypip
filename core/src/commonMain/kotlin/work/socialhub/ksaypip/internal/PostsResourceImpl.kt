@@ -90,6 +90,8 @@ class PostsResourceImpl(
                     }
                     request.wantsTalk?.let { put("wantsTalk", it) }
                     request.replyToPostId?.let { put("replyToPostId", it) }
+                    request.everyone?.let { put("everyone", it) }
+                    request.identified?.let { put("identified", it) }
                 }
                 .post()
         }
@@ -130,11 +132,19 @@ class PostsResourceImpl(
 
     override suspend fun react(request: PostsReactRequest): Response<PostsReactResponse> {
         return proceed {
-            HttpRequest()
+            val http = HttpRequest()
                 .url("${uri}/api/posts/${urlEncode(request.postId.orEmpty())}/reactions/${urlEncode(request.emoji.orEmpty())}")
                 .header(AUTHORIZATION, bearerToken())
                 .accept(MediaType.JSON)
-                .put()
+
+            // The mode is an optional body: absent means anonymous, which is the old write.
+            request.identified?.let { identified ->
+                http.jsonBody {
+                    put("identified", identified)
+                }
+            }
+
+            http.put()
         }
     }
 
@@ -167,6 +177,7 @@ class PostsResourceImpl(
                 .idempotency(request.idempotencyKey)
                 .jsonBody {
                     putOrNull("body", request.body)
+                    request.identified?.let { put("identified", it) }
                 }
                 .post()
         }

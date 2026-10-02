@@ -102,7 +102,8 @@ val feed = saypip.feed().feed(FeedFeedRequest()).data
 feed.items.forEach { post ->
     println(post.body)
     println(post.author?.label)      // 自分が付けた相手の呼び名。見知らぬ相手では null
-    println(post.authorColor)        // author が null のときに描く色
+    println(post.authorColors?.joinToString())   // author が null のときに描くグラデーションの両端
+    println(post.identified)         // 公開ペルソナで書かれた投稿。全員に同じ
     println(post.readableUntil)      // この視聴者が読めなくなる時刻
 }
 
@@ -152,10 +153,20 @@ saypip.conversations().list(ConversationsListRequest())
 saypip.conversations().conversation(
     ConversationsConversationRequest().also { it.conversationId = "c_..." },
 )
+saypip.replies().react(
+    RepliesReactRequest().also { it.replyId = "r_..."; it.emoji = "🎉" },
+)
 saypip.relationships().list(RelationshipsListRequest())
+// 同じローカルなラベル・メモ・マークを、ユーザーページが持つトークンで直接書く
+saypip.users().setLabel(
+    UsersSetLabelRequest().also { it.identityToken = "vi_tok_..."; it.markColors = arrayOf("mint", "sage") },
+)
 saypip.friendRequests().list(FriendRequestsListRequest())
 saypip.notifications().list(NotificationsListRequest())
 saypip.mutes().list(MutesListRequest())
+// つながりタイムライン: この読者が見守っている相手と、ペルソナの公開ページ
+saypip.watches().list(WatchesListRequest())
+saypip.identified().page(IdentifiedPageRequest().also { it.handle = "foo" })
 saypip.media().upload(
     MediaUploadRequest().also {
         it.data = bytes            // image/webp, image/jpeg, image/png
@@ -201,7 +212,7 @@ resume も replay もありません。再接続のたびにフィードの先�
 
 ## アプリケーションが到達できる範囲
 
-ベアラートークンが呼べるのは API の allowlist に載っているルートだけです。管理画面、`GET /me/sign-in`、`DELETE /me`、push 関連、リアルタイムソケットは cookie 専用で、アプリケーションには訪問者と同じ `not_found` を返します。アプリケーションが見るのは利用者自身のビューであり、視聴者ごとの identity、7日間のウィンドウ、ブロックフィルタはすべて同じです。
+ベアラートークンが呼べるのは API の allowlist に載っているルートだけです。管理画面、`GET /me/sign-in`、`DELETE /me`、identified 申請関連、push 関連は cookie 専用で、アプリケーションには訪問者と同じ `not_found` を返します（リアルタイムソケットはこれに含まれません。`GET /ws` は allowlist にあり、`stream` モジュールは handshake に同じトークンを載せます）。アプリケーションが見るのは利用者自身のビューであり、視聴者ごとの identity、7日間のウィンドウ、ブロックフィルタはすべて同じです。
 
 ## 受け取ったデータの扱い
 

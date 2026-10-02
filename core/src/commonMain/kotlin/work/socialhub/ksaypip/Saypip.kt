@@ -6,6 +6,7 @@ import work.socialhub.ksaypip.api.ConversationsResource
 import work.socialhub.ksaypip.api.FeedResource
 import work.socialhub.ksaypip.api.FeedbackResource
 import work.socialhub.ksaypip.api.FriendRequestsResource
+import work.socialhub.ksaypip.api.IdentifiedResource
 import work.socialhub.ksaypip.api.LinksResource
 import work.socialhub.ksaypip.api.MeResource
 import work.socialhub.ksaypip.api.MediaResource
@@ -13,8 +14,10 @@ import work.socialhub.ksaypip.api.MutesResource
 import work.socialhub.ksaypip.api.NotificationsResource
 import work.socialhub.ksaypip.api.PostsResource
 import work.socialhub.ksaypip.api.RelationshipsResource
+import work.socialhub.ksaypip.api.RepliesResource
 import work.socialhub.ksaypip.api.ReportsResource
 import work.socialhub.ksaypip.api.UsersResource
+import work.socialhub.ksaypip.api.WatchesResource
 import work.socialhub.ksaypip.api.WordMutesResource
 import kotlin.js.JsExport
 
@@ -23,8 +26,10 @@ import kotlin.js.JsExport
  *
  * Every read and write here is a bearer-token call, so an application is expected to have been
  * authorized through the `auth` module and to hold an access token. Nothing on this interface can
- * reach the cookie-only blocks — the admin area, `GET /me/sign-in`, `DELETE /me`, the push
- * endpoints and the realtime socket — because a token reaches none of them.
+ * reach the cookie-only blocks — the admin area, `GET /me/sign-in`, `DELETE /me`, the
+ * identified-application addresses and the push endpoints — because a token reaches none of
+ * them. The realtime socket is not one of those: `GET /ws` is in the allowlist, and the `stream`
+ * module opens it with the same token.
  */
 @JsExport
 interface Saypip {
@@ -32,13 +37,16 @@ interface Saypip {
     fun feed(): FeedResource
     fun posts(): PostsResource
     fun conversations(): ConversationsResource
+    fun replies(): RepliesResource
     fun users(): UsersResource
+    fun identified(): IdentifiedResource
     fun relationships(): RelationshipsResource
     fun friendRequests(): FriendRequestsResource
     fun notifications(): NotificationsResource
 
     fun mutes(): MutesResource
     fun wordMutes(): WordMutesResource
+    fun watches(): WatchesResource
 
     fun media(): MediaResource
     fun links(): LinksResource

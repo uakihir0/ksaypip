@@ -3,6 +3,7 @@ package work.socialhub.ksaypip.internal
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.put
 
 /**
  * A nullable string as a body field: the value, or the explicit null that a request may mean as

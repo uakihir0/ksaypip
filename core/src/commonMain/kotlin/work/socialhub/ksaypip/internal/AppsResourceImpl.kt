@@ -2,10 +2,12 @@ package work.socialhub.ksaypip.internal
 
 import work.socialhub.khttpclient.HttpRequest
 import work.socialhub.ksaypip.api.AppsResource
+import work.socialhub.ksaypip.api.request.apps.AppsIconRequest
 import work.socialhub.ksaypip.api.request.apps.AppsListRequest
 import work.socialhub.ksaypip.api.request.apps.AppsRevokeRequest
 import work.socialhub.ksaypip.api.response.Response
 import work.socialhub.ksaypip.api.response.ResponseUnit
+import work.socialhub.ksaypip.api.response.apps.AppsIconResponse
 import work.socialhub.ksaypip.api.response.apps.AppsListResponse
 import work.socialhub.ksaypip.internal.InternalUtility.urlEncode
 import work.socialhub.ksaypip.util.Headers.AUTHORIZATION
@@ -45,5 +47,18 @@ class AppsResourceImpl(
 
     override fun revokeBlocking(request: AppsRevokeRequest): ResponseUnit {
         return toBlocking { revoke(request) }
+    }
+
+    override suspend fun icon(request: AppsIconRequest): Response<AppsIconResponse> {
+        return proceedBytes {
+            HttpRequest()
+                .url("${uri}/api/oauth/app-icon/${urlEncode(request.clientId.orEmpty())}")
+                .header(AUTHORIZATION, bearerToken())
+                .get()
+        }
+    }
+
+    override fun iconBlocking(request: AppsIconRequest): Response<AppsIconResponse> {
+        return toBlocking { icon(request) }
     }
 }

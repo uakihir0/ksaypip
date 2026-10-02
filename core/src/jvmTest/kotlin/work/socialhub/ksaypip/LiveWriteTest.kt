@@ -24,6 +24,8 @@ import work.socialhub.ksaypip.api.request.posts.PostsUnreactRequest
 import work.socialhub.ksaypip.api.request.relationships.RelationshipsListRequest
 import work.socialhub.ksaypip.api.request.relationships.RelationshipsRelationshipRequest
 import work.socialhub.ksaypip.api.request.relationships.RelationshipsSetLabelRequest
+import work.socialhub.ksaypip.api.request.users.UsersSetLabelRequest
+import work.socialhub.ksaypip.api.request.users.UsersUserRequest
 import work.socialhub.ksaypip.api.request.wordmutes.WordMutesForgetRequest
 import work.socialhub.ksaypip.api.request.wordmutes.WordMutesListRequest
 import work.socialhub.ksaypip.api.request.wordmutes.WordMutesMuteRequest
@@ -233,7 +235,7 @@ class LiveWriteTest {
         )
 
         val list = Live.saypip.mutes().list(MutesListRequest()).data
-        val muted = list.items.firstOrNull { it.person.identity.isNotEmpty() }
+        val muted = list.items.firstOrNull { !it.person.identity.isNullOrEmpty() }
         assertNotNull(muted)
         println("MUTE count=${list.items.size} endsAt=${muted.endsAt}")
 
@@ -347,7 +349,7 @@ class LiveWriteTest {
         val originalLabel = page.counterpart.label
         val originalNote = page.note
         val originalEmoji = page.counterpart.mark.emoji
-        val originalColor = page.counterpart.mark.color
+        val originalColors = page.counterpart.mark.colors
 
         val set = Live.saypip.relationships().setLabel(
             RelationshipsSetLabelRequest().also {
@@ -355,13 +357,14 @@ class LiveWriteTest {
                 it.label = "ksaypip live"
                 it.note = "a live test memo"
                 it.markEmoji = "🐢"
-                it.markColor = "mint"
+                it.markColors = arrayOf("mint", "sage")
             },
         ).data
         assertEquals("ksaypip live", set.label)
         assertEquals("a live test memo", set.note)
         assertEquals("🐢", set.mark.emoji)
-        println("REL label set: ${set.label} ${set.mark.emoji}/${set.mark.color}")
+        assertEquals(listOf("mint", "sage"), set.mark.colors?.toList())
+        println("REL label set: ${set.label} ${set.mark.emoji}/${set.mark.colors?.toList()}")
 
         // A replacement and not a patch: what was there goes back, nulls included.
         val restored = Live.saypip.relationships().setLabel(
@@ -370,12 +373,49 @@ class LiveWriteTest {
                 it.label = originalLabel
                 it.note = originalNote
                 it.markEmoji = originalEmoji
-                it.markColor = originalColor
+                it.markColors = originalColors
             },
         ).data
         assertEquals(originalLabel, restored.label)
         assertEquals(originalNote, restored.note)
         println("REL restored: ${restored.label} note=${restored.note}")
+
+        // The same row has a second address: the identity token, with no relationship needed.
+        val identity = page.counterpart.identity
+        if (identity != null) {
+            val userPage = Live.saypip.users().user(
+                UsersUserRequest().also { it.identityToken = identity },
+            ).data
+            val tokenLabel = userPage.person.label
+            val tokenNote = userPage.note
+            val tokenEmoji = userPage.person.mark.emoji
+            val tokenColors = userPage.person.mark.colors
+
+            val setByToken = Live.saypip.users().setLabel(
+                UsersSetLabelRequest().also {
+                    it.identityToken = identity
+                    it.label = "ksaypip live token"
+                    it.note = "a live memo"
+                    it.markEmoji = "🐢"
+                    it.markColors = arrayOf("mint", "sage")
+                },
+            ).data
+            assertEquals("ksaypip live token", setByToken.label)
+            assertEquals(listOf("mint", "sage"), setByToken.mark.colors?.toList())
+            println("USER label set: ${setByToken.label}")
+
+            val restoredByToken = Live.saypip.users().setLabel(
+                UsersSetLabelRequest().also {
+                    it.identityToken = identity
+                    it.label = tokenLabel
+                    it.note = tokenNote
+                    it.markEmoji = tokenEmoji
+                    it.markColors = tokenColors
+                },
+            ).data
+            assertEquals(tokenLabel, restoredByToken.label)
+            println("USER restored: ${restoredByToken.label} note=${restoredByToken.note}")
+        }
     }
 
     @Test
