@@ -111,7 +111,7 @@ val feed = saypip.feed().feed(FeedFeedRequest()).data
 feed.items.forEach { post ->
     println(post.body)
     println(post.author?.label)      // the viewer's own name for them, or null for a stranger
-    println(post.authorColors)       // the gradient's two ends to draw where author is null
+    println(post.authorColors?.joinToString())   // the gradient's two ends to draw where author is null
     println(post.identified)         // written under a public persona, the same for every reader
     println(post.readableUntil)      // when this viewer stops being able to read it
 }

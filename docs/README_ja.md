@@ -102,7 +102,7 @@ val feed = saypip.feed().feed(FeedFeedRequest()).data
 feed.items.forEach { post ->
     println(post.body)
     println(post.author?.label)      // 自分が付けた相手の呼び名。見知らぬ相手では null
-    println(post.authorColors)       // author が null のときに描くグラデーションの両端
+    println(post.authorColors?.joinToString())   // author が null のときに描くグラデーションの両端
     println(post.identified)         // 公開ペルソナで書かれた投稿。全員に同じ
     println(post.readableUntil)      // この視聴者が読めなくなる時刻
 }
